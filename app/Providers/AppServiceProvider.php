@@ -19,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Share constants to all views
+        view()->share('constants', config('constants'));
     }
 }
