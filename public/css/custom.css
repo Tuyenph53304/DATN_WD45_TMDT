@@ -62,6 +62,12 @@ html, body {
   overflow-x: hidden;
 }
 
+/* Ensure body doesn't block modal */
+body.modal-open {
+  overflow: hidden;
+  padding-right: 0 !important;
+}
+
 .app-wrapper {
   display: block !important;
   grid-template-areas: none !important;
@@ -146,6 +152,7 @@ header {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(10px);
   background: rgba(255, 255, 255, 0.95);
+  z-index: 1030 !important;
 }
 
 .top-bar {
@@ -1052,26 +1059,92 @@ footer .btn-primary {
    MODAL - Premium Design
    ============================================ */
 
+.modal {
+  z-index: 1055 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.modal.show {
+  display: block !important;
+}
+
+.modal-backdrop {
+  z-index: 1050 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+.modal-backdrop.show {
+  opacity: 0.5 !important;
+  display: block !important;
+}
+
+.modal-dialog {
+  z-index: 1056 !important;
+  margin: 1.75rem auto;
+  position: relative !important;
+  max-width: 500px !important;
+}
+
+.modal-dialog-centered {
+  display: flex !important;
+  align-items: center !important;
+  min-height: calc(100% - 3.5rem) !important;
+}
+
 .modal-content {
   border-radius: var(--radius-xl);
   border: none;
   overflow: hidden;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 1057 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  pointer-events: auto !important;
+  background-color: #fff !important;
+  background-clip: padding-box !important;
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
 }
 
 .modal-header {
   background: var(--gradient-primary);
   border: none;
   padding: 24px 28px;
+  position: relative;
+  z-index: 1;
 }
 
 .modal-header h5 {
   font-weight: 700;
   font-size: 1.3rem;
+  color: white;
+}
+
+.modal-header .btn-close {
+  filter: brightness(0) invert(1);
 }
 
 .modal-body {
   padding: 28px;
+  position: relative;
+  z-index: 1;
+}
+
+.modal-footer {
+  position: relative;
+  z-index: 1;
 }
 
 .accordion-item {

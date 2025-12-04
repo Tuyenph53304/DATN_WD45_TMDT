@@ -1,109 +1,119 @@
 @extends('admin.layout')
 
-@section('title', 'Chỉnh sửa User')
+@section('title', 'Chỉnh sửa User - Admin Panel')
+@section('page-title', 'Chỉnh sửa User')
 
 @section('content')
-<div class="max-w-2xl">
-    <div class="mb-6">
-        <a href="{{ route('admin.users') }}" class="text-sm text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] mb-4 inline-block">
-            ← Quay lại danh sách
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title"><i class="bi bi-pencil me-2"></i> Chỉnh sửa User: {{ $user->name }}</h3>
+    <div class="card-tools">
+      <a href="{{ route('admin.users.index') }}" class="btn btn-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại
+      </a>
+    </div>
+  </div>
+  <div class="card-body">
+    <form action="{{ route('admin.users.update', $user) }}" method="POST">
+      @csrf
+      @method('PUT')
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="name" class="form-label">Họ và tên <span class="text-danger">*</span></label>
+            <input type="text" class="form-control @error('name') is-invalid @enderror"
+                   id="name" name="name" value="{{ old('name', $user->name) }}" required>
+            @error('name')
+              <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+            <input type="email" class="form-control @error('email') is-invalid @enderror"
+                   id="email" name="email" value="{{ old('email', $user->email) }}" required>
+            @error('email')
+              <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="password" class="form-label">Mật khẩu mới (để trống nếu không đổi)</label>
+            <input type="password" class="form-control @error('password') is-invalid @enderror"
+                   id="password" name="password">
+            @error('password')
+              <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="password_confirmation" class="form-label">Xác nhận mật khẩu mới</label>
+            <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="phone_number" class="form-label">Số điện thoại</label>
+            <input type="text" class="form-control @error('phone_number') is-invalid @enderror"
+                   id="phone_number" name="phone_number" value="{{ old('phone_number', $user->phone_number) }}">
+            @error('phone_number')
+              <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+            <select class="form-control @error('role') is-invalid @enderror" id="role" name="role" required>
+              <option value="user" {{ old('role', $user->role) === 'user' ? 'selected' : '' }}>User</option>
+              <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
+              <option value="khách" {{ old('role', $user->role) === 'khách' ? 'selected' : '' }}>Khách</option>
+            </select>
+            @error('role')
+              <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="address" class="form-label">Địa chỉ</label>
+        <textarea class="form-control @error('address') is-invalid @enderror"
+                  id="address" name="address" rows="2">{{ old('address', $user->address) }}</textarea>
+        @error('address')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+      </div>
+
+      <div class="mb-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="status" name="status" value="1"
+                 {{ old('status', $user->status) ? 'checked' : '' }}>
+          <label class="form-check-label" for="status">
+            Kích hoạt tài khoản
+          </label>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-circle me-1"></i> Cập nhật
+        </button>
+        <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">
+          <i class="bi bi-x-circle me-1"></i> Hủy
         </a>
-        <h1 class="text-2xl font-semibold mt-2">Chỉnh sửa User</h1>
-    </div>
-
-    <div class="bg-white dark:bg-[#161615] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] rounded-lg p-6">
-        @if ($errors->any())
-            <div class="mb-4 p-3 bg-[#fff2f2] dark:bg-[#1D0002] border border-[#f53003] dark:border-[#F61500] rounded-sm text-sm text-[#f53003] dark:text-[#FF4433]">
-                <ul class="list-disc list-inside space-y-1">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        <form method="POST" action="{{ route('admin.users.update', $user) }}" class="space-y-4">
-            @csrf
-            @method('PUT')
-
-            <div>
-                <label for="name" class="block text-sm font-medium mb-2">Họ và tên</label>
-                <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value="{{ old('name', $user->name) }}"
-                    required
-                    autofocus
-                    class="w-full px-4 py-2 bg-white dark:bg-[#0a0a0a] border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm text-[#1b1b18] dark:text-[#EDEDEC] placeholder:text-[#706f6c] dark:placeholder:text-[#A1A09A] focus:outline-none focus:border-[#19140035] dark:focus:border-[#62605b] transition-colors"
-                    placeholder="Nguyễn Văn A"
-                >
-            </div>
-
-            <div>
-                <label for="email" class="block text-sm font-medium mb-2">Email</label>
-                <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value="{{ old('email', $user->email) }}"
-                    required
-                    class="w-full px-4 py-2 bg-white dark:bg-[#0a0a0a] border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm text-[#1b1b18] dark:text-[#EDEDEC] placeholder:text-[#706f6c] dark:placeholder:text-[#A1A09A] focus:outline-none focus:border-[#19140035] dark:focus:border-[#62605b] transition-colors"
-                    placeholder="name@example.com"
-                >
-            </div>
-
-            <div>
-                <label for="password" class="block text-sm font-medium mb-2">Mật khẩu mới (để trống nếu không đổi)</label>
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    minlength="8"
-                    class="w-full px-4 py-2 bg-white dark:bg-[#0a0a0a] border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm text-[#1b1b18] dark:text-[#EDEDEC] placeholder:text-[#706f6c] dark:placeholder:text-[#A1A09A] focus:outline-none focus:border-[#19140035] dark:focus:border-[#62605b] transition-colors"
-                    placeholder="Tối thiểu 8 ký tự"
-                >
-            </div>
-
-            <div>
-                <label for="password_confirmation" class="block text-sm font-medium mb-2">Xác nhận mật khẩu mới</label>
-                <input
-                    type="password"
-                    id="password_confirmation"
-                    name="password_confirmation"
-                    minlength="8"
-                    class="w-full px-4 py-2 bg-white dark:bg-[#0a0a0a] border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm text-[#1b1b18] dark:text-[#EDEDEC] placeholder:text-[#706f6c] dark:placeholder:text-[#A1A09A] focus:outline-none focus:border-[#19140035] dark:focus:border-[#62605b] transition-colors"
-                    placeholder="Nhập lại mật khẩu"
-                >
-            </div>
-
-            <div>
-                <label for="role" class="block text-sm font-medium mb-2">Role</label>
-                <select
-                    id="role"
-                    name="role"
-                    required
-                    class="w-full px-4 py-2 bg-white dark:bg-[#0a0a0a] border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm text-[#1b1b18] dark:text-[#EDEDEC] focus:outline-none focus:border-[#19140035] dark:focus:border-[#62605b] transition-colors"
-                >
-                    <option value="user" {{ old('role', $user->role) === 'user' ? 'selected' : '' }}>User</option>
-                    <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
-                </select>
-            </div>
-
-            <div class="flex items-center gap-4 pt-4">
-                <button
-                    type="submit"
-                    class="px-5 py-2 bg-[#1b1b18] dark:bg-[#eeeeec] dark:text-[#1C1C1A] border border-black dark:border-[#eeeeec] text-white rounded-sm font-medium hover:bg-black dark:hover:bg-white dark:hover:border-white transition-colors"
-                >
-                    Cập nhật
-                </button>
-                <a href="{{ route('admin.users') }}"
-                   class="px-5 py-2 bg-[#e3e3e0] dark:bg-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] rounded-sm font-medium hover:bg-[#dbdbd7] dark:hover:bg-[#62605b] transition-colors">
-                    Hủy
-                </a>
-            </div>
-        </form>
-    </div>
+      </div>
+    </form>
+  </div>
 </div>
 @endsection
-
