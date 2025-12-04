@@ -55,8 +55,8 @@
             <ul class="nav nav-treeview">
               <li class="nav-item">
                 <a
-                  href="{{ route('admin.users') }}"
-                  class="nav-link {{ request()->routeIs('admin.users') && !request()->routeIs('admin.users.create') && !request()->routeIs('admin.users.edit') ? 'active' : '' }}"
+                  href="{{ route('admin.users.index') }}"
+                  class="nav-link {{ request()->routeIs('admin.users.index') ? 'active' : '' }}"
                 >
                   <i class="nav-icon bi bi-list-ul"></i>
                   <p>Danh sách Users</p>
@@ -74,6 +74,137 @@
             </ul>
           </li>
           <!--end::Users Management Menu Item-->
+
+          <!--begin::Products Management Menu Item-->
+          <li class="nav-item {{ request()->routeIs('admin.products*') ? 'menu-open' : '' }}">
+            <a
+              href="#"
+              class="nav-link {{ request()->routeIs('admin.products*') ? 'active' : '' }}"
+            >
+              <i class="nav-icon bi bi-box-seam"></i>
+              <p>
+                Quản lý Sản phẩm
+                <i class="nav-arrow bi bi-chevron-right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a
+                  href="{{ route('admin.products.index') }}"
+                  class="nav-link {{ request()->routeIs('admin.products.index') ? 'active' : '' }}"
+                >
+                  <i class="nav-icon bi bi-list-ul"></i>
+                  <p>Danh sách Sản phẩm</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a
+                  href="{{ route('admin.products.create') }}"
+                  class="nav-link {{ request()->routeIs('admin.products.create') ? 'active' : '' }}"
+                >
+                  <i class="nav-icon bi bi-plus-circle"></i>
+                  <p>Tạo Sản phẩm mới</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <!--end::Products Management Menu Item-->
+
+          <!--begin::Categories Management Menu Item-->
+          <li class="nav-item {{ request()->routeIs('admin.categories*') ? 'menu-open' : '' }}">
+            <a
+              href="#"
+              class="nav-link {{ request()->routeIs('admin.categories*') ? 'active' : '' }}"
+            >
+              <i class="nav-icon bi bi-folder-fill"></i>
+              <p>
+                Quản lý Danh mục
+                <i class="nav-arrow bi bi-chevron-right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a
+                  href="{{ route('admin.categories.index') }}"
+                  class="nav-link {{ request()->routeIs('admin.categories.index') ? 'active' : '' }}"
+                >
+                  <i class="nav-icon bi bi-list-ul"></i>
+                  <p>Danh sách Danh mục</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a
+                  href="{{ route('admin.categories.create') }}"
+                  class="nav-link {{ request()->routeIs('admin.categories.create') ? 'active' : '' }}"
+                >
+                  <i class="nav-icon bi bi-plus-circle"></i>
+                  <p>Tạo Danh mục mới</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <!--end::Categories Management Menu Item-->
+
+          <!--begin::Orders Management Menu Item-->
+          <li class="nav-item {{ request()->routeIs('admin.orders*') ? 'menu-open' : '' }}">
+            <a
+              href="#"
+              class="nav-link {{ request()->routeIs('admin.orders*') ? 'active' : '' }}"
+            >
+              <i class="nav-icon bi bi-receipt"></i>
+              <p>
+                Quản lý Đơn hàng
+                <i class="nav-arrow bi bi-chevron-right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a
+                  href="{{ route('admin.orders.index') }}"
+                  class="nav-link {{ request()->routeIs('admin.orders.index') ? 'active' : '' }}"
+                >
+                  <i class="nav-icon bi bi-list-ul"></i>
+                  <p>Danh sách Đơn hàng</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <!--end::Orders Management Menu Item-->
+
+          <!--begin::Vouchers Management Menu Item-->
+          <li class="nav-item {{ request()->routeIs('admin.vouchers*') ? 'menu-open' : '' }}">
+            <a
+              href="#"
+              class="nav-link {{ request()->routeIs('admin.vouchers*') ? 'active' : '' }}"
+            >
+              <i class="nav-icon bi bi-ticket-perforated"></i>
+              <p>
+                Quản lý Voucher
+                <i class="nav-arrow bi bi-chevron-right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a
+                  href="{{ route('admin.vouchers.index') }}"
+                  class="nav-link {{ request()->routeIs('admin.vouchers.index') ? 'active' : '' }}"
+                >
+                  <i class="nav-icon bi bi-list-ul"></i>
+                  <p>Danh sách Voucher</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a
+                  href="{{ route('admin.vouchers.create') }}"
+                  class="nav-link {{ request()->routeIs('admin.vouchers.create') ? 'active' : '' }}"
+                >
+                  <i class="nav-icon bi bi-plus-circle"></i>
+                  <p>Tạo Voucher mới</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <!--end::Vouchers Management Menu Item-->
 
           <!--begin::Home Menu Item-->
           <li class="nav-item">

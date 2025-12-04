@@ -86,6 +86,7 @@ class UserController extends Controller
     public function editProfile()
     {
         $user = Auth::user();
+        $user->load('shippingAddresses');
         return view('user.profile.edit', compact('user'));
     }
 
@@ -157,5 +158,134 @@ class UserController extends Controller
             ->firstOrFail();
 
         return view('user.orders.show', compact('order'));
+    }
+
+    /**
+     * Lưu địa chỉ giao hàng mới
+     */
+    public function storeShippingAddress(Request $request)
+    {
+        $user = Auth::user();
+
+        $validator = Validator::make($request->all(), [
+            'full_name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'address' => 'required|string|max:500',
+            'city' => 'required|string|max:255',
+            'default' => 'nullable',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('user.profile.edit')
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Vui lòng kiểm tra lại thông tin địa chỉ.');
+        }
+
+        // Nếu đặt làm mặc định, bỏ mặc định của các địa chỉ khác
+        $isDefault = $request->has('default') && $request->default == '1';
+        if ($isDefault) {
+            ShippingAddress::where('user_id', $user->id)
+                ->update(['default' => false]);
+        }
+
+        // Nếu đây là địa chỉ đầu tiên, tự động đặt làm mặc định
+        if (ShippingAddress::where('user_id', $user->id)->count() == 0) {
+            $isDefault = true;
+        }
+
+        ShippingAddress::create([
+            'user_id' => $user->id,
+            'full_name' => $request->full_name,
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'city' => $request->city,
+            'default' => $isDefault,
+        ]);
+
+        return redirect()->route('user.profile.edit')
+            ->with('success', 'Thêm địa chỉ giao hàng thành công!');
+    }
+
+    /**
+     * Cập nhật địa chỉ giao hàng
+     */
+    public function updateShippingAddress(Request $request, $id)
+    {
+        $user = Auth::user();
+        $address = ShippingAddress::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $validator = Validator::make($request->all(), [
+            'full_name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'address' => 'required|string|max:500',
+            'city' => 'required|string|max:255',
+            'default' => 'nullable',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('user.profile.edit')
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Vui lòng kiểm tra lại thông tin địa chỉ.');
+        }
+
+        // Nếu đặt làm mặc định, bỏ mặc định của các địa chỉ khác
+        $isDefault = $request->has('default') && $request->default == '1';
+        if ($isDefault) {
+            ShippingAddress::where('user_id', $user->id)
+                ->where('id', '!=', $id)
+                ->update(['default' => false]);
+        }
+
+        $address->update([
+            'full_name' => $request->full_name,
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'city' => $request->city,
+            'default' => $isDefault ? true : $address->default,
+        ]);
+
+        return redirect()->route('user.profile.edit')
+            ->with('success', 'Cập nhật địa chỉ giao hàng thành công!');
+    }
+
+    /**
+     * Xóa địa chỉ giao hàng
+     */
+    public function deleteShippingAddress($id)
+    {
+        $user = Auth::user();
+        $address = ShippingAddress::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $address->delete();
+
+        return redirect()->route('user.profile.edit')
+            ->with('success', 'Xóa địa chỉ giao hàng thành công!');
+    }
+
+    /**
+     * Đặt địa chỉ làm mặc định
+     */
+    public function setDefaultShippingAddress($id)
+    {
+        $user = Auth::user();
+        $address = ShippingAddress::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        // Bỏ mặc định của tất cả địa chỉ
+        ShippingAddress::where('user_id', $user->id)
+            ->update(['default' => false]);
+
+        // Đặt địa chỉ này làm mặc định
+        $address->update(['default' => true]);
+
+        return redirect()->route('user.profile.edit')
+            ->with('success', 'Đã đặt địa chỉ làm mặc định!');
     }
 }

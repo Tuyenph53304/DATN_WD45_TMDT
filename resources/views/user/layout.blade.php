@@ -257,16 +257,28 @@
           <!--begin::Container-->
           <div class="container-fluid px-3 px-lg-4" style="max-width: 100%; margin: 0 auto;">
             @if(session('success'))
-              <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              <div class="alert alert-success alert-dismissible fade show mt-3 shadow-sm" role="alert" style="border-radius: 15px; border-left: 4px solid #10b981; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: none; padding: 18px 25px;">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-check-circle-fill me-3" style="font-size: 1.5rem; color: #10b981;"></i>
+                  <div class="flex-grow-1">
+                    <strong style="color: #065f46; font-size: 1.05rem;">Thành công!</strong>
+                    <div style="color: #047857; margin-top: 4px;">{{ session('success') }}</div>
+                  </div>
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
               </div>
             @endif
 
             @if(session('error'))
-              <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              <div class="alert alert-danger alert-dismissible fade show mt-3 shadow-sm" role="alert" style="border-radius: 15px; border-left: 4px solid #ef4444; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: none; padding: 18px 25px;">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-exclamation-triangle-fill me-3" style="font-size: 1.5rem; color: #ef4444;"></i>
+                  <div class="flex-grow-1">
+                    <strong style="color: #991b1b; font-size: 1.05rem;">Lỗi!</strong>
+                    <div style="color: #b91c1c; margin-top: 4px;">{{ session('error') }}</div>
+                  </div>
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
               </div>
             @endif
 
@@ -358,80 +370,143 @@
       <!--end::Footer-->
 
       <!-- Customer Support Modal Button -->
-      <button type="button" class="btn support-button position-fixed bottom-0 end-0 m-4" data-bs-toggle="modal" data-bs-target="#supportModal">
+      <button type="button" class="btn support-button position-fixed bottom-0 end-0 m-4"
+              onclick="toggleSupportModal(); console.log('Button clicked');"
+              style="z-index: 1040; cursor: pointer;">
         <i class="bi bi-headset"></i>
       </button>
 
       <!-- Customer Support Modal -->
-      <div class="modal fade" id="supportModal" tabindex="-1" aria-labelledby="supportModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="supportModalLabel">
-                <i class="bi bi-headset"></i> Chăm sóc khách hàng
+      <div id="supportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(0,0,0,0.5); overflow-y: auto; align-items: center; justify-content: center;">
+        <div style="display: flex; align-items: center; justify-content: center; min-height: 100%; padding: 20px; position: relative;">
+          <div onclick="event.stopPropagation();" style="position: relative; max-width: 600px; width: 100%; background: white; border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); overflow: hidden; margin: auto;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 24px 28px; color: white; display: flex; justify-content: space-between; align-items: center;">
+              <h5 style="font-weight: 700; font-size: 1.3rem; margin: 0;">
+                <i class="bi bi-headset me-2"></i> Chăm sóc khách hàng
               </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              <button type="button" onclick="toggleSupportModal()" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 1.8rem; cursor: pointer; padding: 0; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; line-height: 1; border-radius: 50%; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">&times;</button>
             </div>
-            <div class="modal-body">
+            <div style="padding: 28px;">
               <div class="text-center mb-4">
-                <i class="bi bi-person-circle text-primary" style="font-size: 4rem;"></i>
-                <h6 class="mt-2">Hỗ trợ trực tuyến 24/7</h6>
+                <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10"
+                     style="width: 100px; height: 100px;">
+                  <i class="bi bi-headset text-primary" style="font-size: 3rem;"></i>
+                </div>
+                <h5 class="mt-3 mb-2">Hỗ trợ trực tuyến 24/7</h5>
                 <p class="text-muted">Chúng tôi luôn sẵn sàng hỗ trợ bạn!</p>
               </div>
 
-              <div class="d-grid gap-2">
-                <a href="tel:{{ str_replace(' ', '', config('constants.contact.hotline')) }}" class="btn btn-outline-primary">
-                  <i class="bi bi-telephone-fill"></i> Gọi ngay: {{ config('constants.contact.hotline') }}
-                </a>
-                <a href="{{ config('constants.contact.zalo') }}" target="_blank" class="btn btn-outline-success">
-                  <i class="bi bi-chat-dots-fill"></i> Chat Zalo
-                </a>
-                <a href="{{ config('constants.contact.messenger') }}" target="_blank" class="btn btn-outline-primary">
-                  <i class="bi bi-messenger"></i> Facebook Messenger
-                </a>
-                <a href="mailto:{{ config('constants.contact.email') }}" class="btn btn-outline-danger">
-                  <i class="bi bi-envelope-fill"></i> Email: {{ config('constants.contact.email') }}
-                </a>
+              <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                  <div class="card border-0 shadow-sm h-100 text-center p-3" style="transition: all 0.3s; cursor: pointer;"
+                       onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.15)'"
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+                    <a href="tel:{{ str_replace(' ', '', config('constants.contact.hotline')) }}" class="text-decoration-none text-dark">
+                      <i class="bi bi-telephone-fill text-primary" style="font-size: 2.5rem;"></i>
+                      <h6 class="mt-2 mb-1">Gọi điện thoại</h6>
+                      <p class="mb-0 text-primary fw-bold">{{ config('constants.contact.hotline') }}</p>
+                    </a>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card border-0 shadow-sm h-100 text-center p-3" style="transition: all 0.3s; cursor: pointer;"
+                       onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.15)'"
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+                    <a href="mailto:{{ config('constants.contact.email') }}" class="text-decoration-none text-dark">
+                      <i class="bi bi-envelope-fill text-danger" style="font-size: 2.5rem;"></i>
+                      <h6 class="mt-2 mb-1">Gửi Email</h6>
+                      <p class="mb-0 text-danger fw-bold small">{{ config('constants.contact.email') }}</p>
+                    </a>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card border-0 shadow-sm h-100 text-center p-3" style="transition: all 0.3s; cursor: pointer;"
+                       onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.15)'"
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+                    <a href="{{ config('constants.contact.zalo') }}" target="_blank" class="text-decoration-none text-dark">
+                      <i class="bi bi-chat-dots-fill text-success" style="font-size: 2.5rem;"></i>
+                      <h6 class="mt-2 mb-1">Chat Zalo</h6>
+                      <p class="mb-0 text-muted small">Nhắn tin ngay</p>
+                    </a>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card border-0 shadow-sm h-100 text-center p-3" style="transition: all 0.3s; cursor: pointer;"
+                       onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.15)'"
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+                    <a href="{{ config('constants.contact.messenger') }}" target="_blank" class="text-decoration-none text-dark">
+                      <i class="bi bi-messenger text-primary" style="font-size: 2.5rem;"></i>
+                      <h6 class="mt-2 mb-1">Messenger</h6>
+                      <p class="mb-0 text-muted small">Chat Facebook</p>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-light rounded p-3 mb-3">
+                <h6 class="mb-3"><i class="bi bi-info-circle text-primary me-2"></i> Thông tin liên hệ</h6>
+                <div class="row">
+                  <div class="col-md-6 mb-2">
+                    <i class="bi bi-geo-alt-fill text-primary me-2"></i>
+                    <small>{{ config('constants.contact.address') }}</small>
+                  </div>
+                  <div class="col-md-6 mb-2">
+                    <i class="bi bi-clock-fill text-primary me-2"></i>
+                    <small>{{ config('constants.contact.working_hours') }}</small>
+                  </div>
+                </div>
               </div>
 
               <hr>
 
               <div>
-                <h6 class="mb-3">Câu hỏi thường gặp</h6>
+                <h6 class="mb-3"><i class="bi bi-question-circle text-primary me-2"></i> Câu hỏi thường gặp</h6>
                 <div class="accordion" id="faqAccordion">
                   <div class="accordion-item">
                     <h2 class="accordion-header">
                       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                        Chính sách đổi trả như thế nào?
+                        <i class="bi bi-arrow-return-left me-2"></i> Chính sách đổi trả như thế nào?
                       </button>
                     </h2>
                     <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                       <div class="accordion-body">
-                        Chúng tôi hỗ trợ đổi trả trong vòng 7 ngày kể từ ngày nhận hàng với điều kiện sản phẩm còn nguyên vẹn, chưa sử dụng.
+                        Chúng tôi hỗ trợ đổi trả trong vòng 7 ngày kể từ ngày nhận hàng với điều kiện sản phẩm còn nguyên vẹn, chưa sử dụng. Sản phẩm phải còn đầy đủ phụ kiện và hộp đựng gốc.
                       </div>
                     </div>
                   </div>
                   <div class="accordion-item">
                     <h2 class="accordion-header">
                       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                        Thời gian bảo hành bao lâu?
+                        <i class="bi bi-shield-check me-2"></i> Thời gian bảo hành bao lâu?
                       </button>
                     </h2>
                     <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                       <div class="accordion-body">
-                        Tất cả sản phẩm được bảo hành chính hãng từ 12-24 tháng tùy theo nhà sản xuất.
+                        Tất cả sản phẩm được bảo hành chính hãng từ 12-24 tháng tùy theo nhà sản xuất. Bảo hành bao gồm lỗi phần cứng và phần mềm do nhà sản xuất.
                       </div>
                     </div>
                   </div>
                   <div class="accordion-item">
                     <h2 class="accordion-header">
                       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                        Phí vận chuyển là bao nhiêu?
+                        <i class="bi bi-truck me-2"></i> Phí vận chuyển là bao nhiêu?
                       </button>
                     </h2>
                     <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                       <div class="accordion-body">
-                        Miễn phí vận chuyển cho đơn hàng trên 5 triệu. Dưới 5 triệu phí ship 30.000đ.
+                        Miễn phí vận chuyển cho đơn hàng trên 5 triệu đồng. Đơn hàng dưới 5 triệu phí ship 30.000đ. Giao hàng toàn quốc trong 2-5 ngày làm việc.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="accordion-item">
+                    <h2 class="accordion-header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                        <i class="bi bi-credit-card me-2"></i> Phương thức thanh toán nào được chấp nhận?
+                      </button>
+                    </h2>
+                    <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                      <div class="accordion-body">
+                        Chúng tôi chấp nhận thanh toán qua MoMo, COD (thanh toán khi nhận hàng), chuyển khoản ngân hàng, và các thẻ tín dụng/ghi nợ quốc tế.
                       </div>
                     </div>
                   </div>
@@ -521,7 +596,63 @@
           });
         }
       });
+
+      // Function to toggle support modal - Simple and reliable
+      window.toggleSupportModal = function() {
+        console.log('toggleSupportModal called');
+        var modal = document.getElementById('supportModal');
+        if (!modal) {
+          console.error('Support modal element not found!');
+          alert('Modal không tìm thấy! Vui lòng refresh trang.');
+          return;
+        }
+
+        var currentDisplay = window.getComputedStyle(modal).display;
+        console.log('Current display:', currentDisplay);
+        console.log('Modal element:', modal);
+
+        if (currentDisplay === 'none' || currentDisplay === '') {
+          // Show modal
+          console.log('Showing modal...');
+          modal.style.display = 'flex';
+          modal.style.zIndex = '9999';
+          document.body.style.overflow = 'hidden';
+        } else {
+          // Hide modal
+          console.log('Hiding modal...');
+          modal.style.display = 'none';
+          document.body.style.overflow = '';
+        }
+      };
+
+      // Close modal when clicking backdrop (only the backdrop, not the content)
+      document.getElementById('supportModal')?.addEventListener('click', function(e) {
+        // Only close if clicking directly on the backdrop (not on modal content)
+        if (e.target === this) {
+          toggleSupportModal();
+        }
+      });
+
+      // Close modal with Escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' || e.keyCode === 27) {
+          var modal = document.getElementById('supportModal');
+          if (modal && window.getComputedStyle(modal).display !== 'none') {
+            toggleSupportModal();
+          }
+        }
+      });
+
+      // Test function - can be called from console
+      window.testSupportModal = function() {
+        console.log('Testing support modal...');
+        var modal = document.getElementById('supportModal');
+        console.log('Modal element:', modal);
+        console.log('Current display:', modal ? window.getComputedStyle(modal).display : 'not found');
+        toggleSupportModal();
+      };
     </script>
+    @stack('scripts')
     <!--end::Script-->
   </body>
   <!--end::Body-->

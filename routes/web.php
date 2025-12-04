@@ -52,4 +52,10 @@ Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
     Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
     Route::get('/orders', [UserController::class, 'orders'])->name('orders');
     Route::get('/orders/{id}', [UserController::class, 'orderDetail'])->name('orders.show');
+
+    // Shipping Address routes
+    Route::post('/shipping-address', [UserController::class, 'storeShippingAddress'])->name('shipping-address.store');
+    Route::put('/shipping-address/{id}', [UserController::class, 'updateShippingAddress'])->name('shipping-address.update');
+    Route::delete('/shipping-address/{id}', [UserController::class, 'deleteShippingAddress'])->name('shipping-address.delete');
+    Route::post('/shipping-address/{id}/set-default', [UserController::class, 'setDefaultShippingAddress'])->name('shipping-address.set-default');
 });
