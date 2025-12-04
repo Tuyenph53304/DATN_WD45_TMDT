@@ -194,34 +194,38 @@
   </div>
   <div class="card-body p-4">
     <div class="row g-4">
-      @for($i = 1; $i <= 4; $i++)
+      @forelse($flashSaleProducts as $product)
       <div class="col-lg-3 col-md-4 col-sm-6">
         <div class="card product-card h-100 position-relative">
-          <span class="flash-sale-badge discount-badge position-absolute top-0 end-0 m-3">-{{ 25 + $i * 5 }}%</span>
+          @if($product->defaultVariant)
+          <span class="flash-sale-badge discount-badge position-absolute top-0 end-0 m-3">HOT</span>
           <div class="position-relative overflow-hidden" style="height: 220px;">
-            <img src="https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop" class="card-img-top w-100 h-100" alt="Product" style="object-fit: cover;">
+            <img src="{{ $product->defaultVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop' }}" class="card-img-top w-100 h-100" alt="{{ $product->name }}" style="object-fit: cover;">
             <div class="position-absolute top-0 start-0 m-2">
               <span class="badge bg-danger">HOT</span>
             </div>
           </div>
           <div class="card-body d-flex flex-column">
-            <h6 class="card-title fw-bold">ASUS ROG Strix G15 RTX {{ 4050 + $i * 10 }}</h6>
-            <p class="text-muted small mb-2">AMD Ryzen 7, 16GB RAM, 512GB SSD</p>
-
-            <!-- Rating -->
-            <div class="product-rating mb-2">
-              <div class="stars">
-                @for($star = 1; $star <= 5; $star++)
-                  <i class="bi bi-star{{ $star <= (4 + ($i % 2)) ? '-fill' : '' }}"></i>
-                @endfor
-              </div>
-              <span class="rating-text">({{ 120 + $i * 15 }})</span>
-            </div>
+            <h6 class="card-title fw-bold">
+              <a href="{{ route('products.show', $product->slug) }}" class="text-decoration-none text-dark">{{ $product->name }}</a>
+            </h6>
+            <p class="text-muted small mb-2">
+              @if($product->defaultVariant && $product->defaultVariant->attributeValues->count() > 0)
+                @foreach($product->defaultVariant->attributeValues->take(3) as $attrValue)
+                  {{ $attrValue->value }}@if(!$loop->last), @endif
+                @endforeach
+              @else
+                {{ $product->description ? Str::limit($product->description, 50) : 'Xem chi tiết' }}
+              @endif
+            </p>
 
             <!-- Price -->
             <div class="price-container mb-3">
-              <span class="price-old">{{ number_format(25000000 - $i * 2000000) }}₫</span>
-              <span class="price-new">{{ number_format(18000000 - $i * 1500000) }}₫</span>
+              @if($product->minPrice && $product->maxPrice && $product->minPrice != $product->maxPrice)
+                <span class="price-new">{{ number_format($product->minPrice) }}₫ - {{ number_format($product->maxPrice) }}₫</span>
+              @elseif($product->defaultVariant)
+                <span class="price-new">{{ number_format($product->defaultVariant->price) }}₫</span>
+              @endif
             </div>
 
             <!-- Features -->
@@ -232,24 +236,36 @@
 
             <!-- Stock Status -->
             <div class="mb-3">
-              <span class="stock-status in-stock">
-                <i class="bi bi-check-circle-fill"></i> Còn hàng
+              <span class="stock-status {{ $product->defaultVariant && $product->defaultVariant->stock > 0 ? 'in-stock' : 'out-of-stock' }}">
+                <i class="bi bi-{{ $product->defaultVariant && $product->defaultVariant->stock > 0 ? 'check' : 'x' }}-circle-fill"></i>
+                {{ $product->defaultVariant && $product->defaultVariant->stock > 0 ? 'Còn hàng' : 'Hết hàng' }}
               </span>
             </div>
 
             <!-- Actions -->
             <div class="product-actions">
-              <button class="btn btn-danger btn-sm flex-grow-1">
-                <i class="bi bi-cart-plus"></i> {{ config('constants.buttons.buy_now') }}
+              @if($product->defaultVariant && $product->defaultVariant->stock > 0)
+              <button class="btn btn-danger btn-sm flex-grow-1 add-to-cart-btn" data-variant-id="{{ $product->defaultVariant->id }}">
+                <i class="bi bi-cart-plus"></i> Thêm vào giỏ
               </button>
-              <button class="btn btn-outline-danger btn-sm">
-                <i class="bi bi-heart"></i>
+              @else
+              <button class="btn btn-secondary btn-sm flex-grow-1" disabled>
+                <i class="bi bi-x-circle"></i> Hết hàng
               </button>
+              @endif
+              <a href="{{ route('products.show', $product->slug) }}" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-eye"></i>
+              </a>
             </div>
           </div>
+          @endif
         </div>
       </div>
-      @endfor
+      @empty
+      <div class="col-12">
+        <p class="text-center text-muted">Chưa có sản phẩm flash sale</p>
+      </div>
+      @endforelse
     </div>
   </div>
 </div>
@@ -292,14 +308,14 @@
 <div class="mb-5">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="fw-bold"><i class="bi {{ config('constants.sections.featured.icon') }}" style="color: {{ config('constants.sections.featured.color') }};"></i> {{ config('constants.sections.featured.title') }}</h3>
-    <a href="#" class="btn btn-outline-primary">{{ config('constants.buttons.view_all') }} <i class="bi bi-arrow-right"></i></a>
+    <a href="{{ route('products.index') }}" class="btn btn-outline-primary">{{ config('constants.buttons.view_all') }} <i class="bi bi-arrow-right"></i></a>
   </div>
   <div class="row g-4">
-    @for($i = 1; $i <= 4; $i++)
+    @forelse($featuredProducts as $product)
     <div class="col-lg-3 col-md-4 col-sm-6">
       <div class="card product-card h-100">
         <div class="position-relative overflow-hidden" style="height: 240px;">
-          <img src="https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop" class="card-img-top w-100 h-100" alt="Product" style="object-fit: cover;">
+          <img src="{{ $product->defaultVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop' }}" class="card-img-top w-100 h-100" alt="{{ $product->name }}" style="object-fit: cover;">
           <div class="position-absolute top-0 start-0 m-3">
             <span class="badge bg-success">Mới</span>
           </div>
@@ -310,41 +326,39 @@
           </div>
         </div>
         <div class="card-body d-flex flex-column">
-          <h6 class="card-title fw-bold">MacBook Pro 14" M3 Pro</h6>
-          <p class="text-muted small mb-2">M3 Pro, 18GB RAM, 512GB SSD, 14.2" Liquid Retina XDR</p>
-
-          <!-- Rating -->
-          <div class="product-rating mb-2">
-            <div class="stars">
-              <i class="bi bi-star-fill"></i>
-              <i class="bi bi-star-fill"></i>
-              <i class="bi bi-star-fill"></i>
-              <i class="bi bi-star-fill"></i>
-              <i class="bi bi-star-half"></i>
-            </div>
-            <span class="rating-text">({{ 245 + $i * 12 }})</span>
-          </div>
+          <h6 class="card-title fw-bold">
+            <a href="{{ route('products.show', $product->slug) }}" class="text-decoration-none text-dark">{{ $product->name }}</a>
+          </h6>
+          <p class="text-muted small mb-2">
+            @if($product->defaultVariant && $product->defaultVariant->attributeValues->count() > 0)
+              @foreach($product->defaultVariant->attributeValues->take(3) as $attrValue)
+                {{ $attrValue->value }}@if(!$loop->last), @endif
+              @endforeach
+            @else
+              {{ $product->description ? Str::limit($product->description, 50) : 'Xem chi tiết' }}
+            @endif
+          </p>
 
           <!-- Price -->
           <div class="price-container mb-3">
-            <span class="price-new">{{ number_format(42990000 - $i * 2000000) }}₫</span>
+            @if($product->minPrice && $product->maxPrice && $product->minPrice != $product->maxPrice)
+              <span class="price-new">{{ number_format($product->minPrice) }}₫ - {{ number_format($product->maxPrice) }}₫</span>
+            @elseif($product->defaultVariant)
+              <span class="price-new">{{ number_format($product->defaultVariant->price) }}₫</span>
+            @endif
           </div>
 
           <!-- Specs -->
+          @if($product->defaultVariant && $product->defaultVariant->attributeValues->count() > 0)
           <div class="product-specs mb-3">
+            @foreach($product->defaultVariant->attributeValues->take(3) as $attrValue)
             <div class="spec-item">
-              <i class="bi bi-cpu"></i>
-              <span>M3 Pro</span>
+              <i class="bi bi-{{ $attrValue->attribute->slug === 'cpu' ? 'cpu' : ($attrValue->attribute->slug === 'ram' ? 'memory' : 'hdd') }}"></i>
+              <span>{{ $attrValue->value }}</span>
             </div>
-            <div class="spec-item">
-              <i class="bi bi-memory"></i>
-              <span>18GB RAM</span>
-            </div>
-            <div class="spec-item">
-              <i class="bi bi-hdd"></i>
-              <span>512GB SSD</span>
-            </div>
+            @endforeach
           </div>
+          @endif
 
           <!-- Warranty -->
           <div class="mb-3">
@@ -355,17 +369,27 @@
 
           <!-- Actions -->
           <div class="product-actions">
-            <button class="btn btn-primary btn-sm flex-grow-1">
-              <i class="bi bi-cart-plus"></i> {{ config('constants.buttons.add_to_cart') }}
+            @if($product->defaultVariant && $product->defaultVariant->stock > 0)
+            <button class="btn btn-primary btn-sm flex-grow-1 add-to-cart-btn" data-variant-id="{{ $product->defaultVariant->id }}">
+              <i class="bi bi-cart-plus"></i> Thêm vào giỏ
             </button>
-            <button class="btn btn-outline-danger btn-sm">
-              <i class="bi bi-heart"></i>
+            @else
+            <button class="btn btn-secondary btn-sm flex-grow-1" disabled>
+              <i class="bi bi-x-circle"></i> Hết hàng
             </button>
+            @endif
+            <a href="{{ route('products.show', $product->slug) }}" class="btn btn-outline-danger btn-sm">
+              <i class="bi bi-eye"></i>
+            </a>
           </div>
         </div>
       </div>
     </div>
-    @endfor
+    @empty
+    <div class="col-12">
+      <p class="text-center text-muted">Chưa có sản phẩm nổi bật</p>
+    </div>
+    @endforelse
   </div>
 </div>
 <!--end::Featured Products-->
@@ -376,7 +400,7 @@
 <div class="mb-5">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="fw-bold"><i class="bi {{ config('constants.categories.gaming.icon') }}" style="color: {{ config('constants.categories.gaming.color') }};"></i> {{ config('constants.categories.gaming.name') }}</h3>
-    <a href="#" class="btn btn-outline-primary">{{ config('constants.buttons.view_all') }} <i class="bi bi-arrow-right"></i></a>
+    <a href="{{ route('products.index') }}" class="btn btn-outline-primary">{{ config('constants.buttons.view_all') }} <i class="bi bi-arrow-right"></i></a>
   </div>
   <div class="row g-4">
     @for($i = 1; $i <= 4; $i++)
@@ -442,7 +466,7 @@
 <div class="mb-5">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="fw-bold"><i class="bi {{ config('constants.categories.office.icon') }}" style="color: {{ config('constants.categories.office.color') }};"></i> {{ config('constants.categories.office.name') }}</h3>
-    <a href="#" class="btn btn-outline-primary">{{ config('constants.buttons.view_all') }} <i class="bi bi-arrow-right"></i></a>
+    <a href="{{ route('products.index') }}" class="btn btn-outline-primary">{{ config('constants.buttons.view_all') }} <i class="bi bi-arrow-right"></i></a>
   </div>
   <div class="row g-4">
     @for($i = 1; $i <= 4; $i++)
@@ -630,5 +654,61 @@
     }
   `;
   document.head.appendChild(style);
+
+  // Add to cart functionality
+  document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const variantId = this.getAttribute('data-variant-id');
+      const btn = this;
+      const originalText = btn.innerHTML;
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang thêm...';
+
+      fetch('{{ route("api.cart.add") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+          product_variant_id: variantId,
+          quantity: 1
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          btn.innerHTML = '<i class="bi bi-check-circle"></i> Đã thêm';
+          btn.classList.remove('btn-danger', 'btn-primary');
+          btn.classList.add('btn-success');
+
+          // Update cart count in header if exists
+          const cartBadge = document.querySelector('.cart-count-badge');
+          if (cartBadge) {
+            cartBadge.textContent = data.cart_count;
+          }
+
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-danger', 'btn-primary');
+            btn.disabled = false;
+          }, 2000);
+        } else {
+          alert(data.message || 'Có lỗi xảy ra');
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra. Vui lòng thử lại.');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      });
+    });
+  });
 </script>
 @endpush
+
