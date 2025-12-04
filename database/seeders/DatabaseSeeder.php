@@ -16,11 +16,11 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         $this->call([
-            RoleSeeder::class,
             UserSeeder::class,
             CategorySeeder::class,
             AttributeSeeder::class,
-            ProductSeeder::class, // ProductSeeder phải chạy cuối cùng
+            ProductSeeder::class, // ProductSeeder phải chạy sau AttributeSeeder
+            ShippingAddressSeeder::class, // ShippingAddressSeeder phải chạy sau UserSeeder
         ]);
     }
 }

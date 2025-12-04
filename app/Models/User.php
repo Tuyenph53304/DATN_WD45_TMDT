@@ -22,6 +22,11 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'phone_number',
+        'address',
+        'google_id',
+        'activation_token',
+        'status',
     ];
 
     /**
@@ -53,5 +58,21 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    /**
+     * Kiểm tra xem user có phải là khách không
+     */
+    public function isGuest(): bool
+    {
+        return $this->role === 'khách';
+    }
+
+    /**
+     * Kiểm tra xem user có phải là người dùng không
+     */
+    public function isUser(): bool
+    {
+        return $this->role === 'user';
     }
 }
