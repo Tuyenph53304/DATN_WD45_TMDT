@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('phone_number')->nullable();
             $table->string('address')->nullable();
-            $table->unsignedBigInteger('role_id')->default(2); // Giả sử 2 là 'Customer'
+            $table->string('role')->default('user'); // Default là 'user' (user, admin, khách)
             $table->string('google_id')->nullable();
             $table->string('activation_token')->nullable();
             $table->boolean('status')->default(true);

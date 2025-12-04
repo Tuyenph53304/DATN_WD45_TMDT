@@ -34,10 +34,20 @@ class AttributeSeeder extends Seeder
         AttributeValue::create(['attribute_id' => $color->id, 'value' => 'Đen']);
         AttributeValue::create(['attribute_id' => $color->id, 'value' => 'Bạc']);
         AttributeValue::create(['attribute_id' => $color->id, 'value' => 'Xám']);
-        
+
         // 5. Tạo thuộc tính Kích cỡ màn hình
         $screen = Attribute::create(['name' => 'Kích cỡ màn hình', 'slug' => 'kich-co-man-hinh']);
+        AttributeValue::create(['attribute_id' => $screen->id, 'value' => '13.3 inch']);
         AttributeValue::create(['attribute_id' => $screen->id, 'value' => '14 inch']);
         AttributeValue::create(['attribute_id' => $screen->id, 'value' => '15.6 inch']);
+        AttributeValue::create(['attribute_id' => $screen->id, 'value' => '17.3 inch']);
+
+        // 6. Tạo thuộc tính Card đồ họa
+        $gpu = Attribute::create(['name' => 'Card đồ họa', 'slug' => 'card-do-hoa']);
+        AttributeValue::create(['attribute_id' => $gpu->id, 'value' => 'Intel UHD Graphics']);
+        AttributeValue::create(['attribute_id' => $gpu->id, 'value' => 'NVIDIA GeForce RTX 3050']);
+        AttributeValue::create(['attribute_id' => $gpu->id, 'value' => 'NVIDIA GeForce RTX 3060']);
+        AttributeValue::create(['attribute_id' => $gpu->id, 'value' => 'NVIDIA GeForce RTX 4070']);
+        AttributeValue::create(['attribute_id' => $gpu->id, 'value' => 'AMD Radeon RX 6600M']);
     }
 }
