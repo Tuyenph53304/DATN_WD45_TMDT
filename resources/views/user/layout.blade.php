@@ -127,17 +127,18 @@
                 @endauth
               </a>
               @auth
-                <div class="dropdown">
-                  <a class="nav-link dropdown-toggle d-flex align-items-center text-decoration-none" href="#" role="button" data-bs-toggle="dropdown" style="min-width: 120px;">
+                <div class="dropdown position-relative">
+                  <button class="nav-link dropdown-toggle d-flex align-items-center text-decoration-none border-0 bg-transparent p-0" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="min-width: 120px; cursor: pointer;">
                     <i class="bi bi-person-circle me-2" style="font-size: 1.75rem; color: var(--primary-color);"></i>
                     <div class="d-none d-md-block text-start">
                       <div class="fw-semibold" style="font-size: 0.9rem;">{{ Auth::user()->name }}</div>
                       <small class="text-muted">Tài khoản</small>
                     </div>
-                  </a>
-                  <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: var(--radius-lg); min-width: 220px;">
-                    <li><a class="dropdown-item py-2" href="#"><i class="bi bi-person me-2"></i> Thông tin tài khoản</a></li>
-                    <li><a class="dropdown-item py-2" href="#"><i class="bi bi-receipt me-2"></i> Đơn hàng của tôi</a></li>
+                    <i class="bi bi-chevron-down ms-2 d-none d-md-inline"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" aria-labelledby="userDropdown" style="border-radius: var(--radius-lg); min-width: 220px; z-index: 9999;">
+                    <li><a class="dropdown-item py-2" href="{{ route('user.profile') }}"><i class="bi bi-person me-2"></i> Thông tin tài khoản</a></li>
+                    <li><a class="dropdown-item py-2" href="{{ route('user.orders') }}"><i class="bi bi-receipt me-2"></i> Đơn hàng của tôi</a></li>
                     <li><a class="dropdown-item py-2" href="#"><i class="bi bi-heart me-2"></i> Sản phẩm yêu thích</a></li>
                     @if(Auth::user()->isAdmin())
                       <li><hr class="dropdown-divider"></li>
@@ -469,6 +470,58 @@
     <script src="{{ asset('js/adminlte.min.js') }}?v={{ filemtime(public_path('js/adminlte.min.js')) }}"></script>
     <!--end::Required Plugin(AdminLTE)-->
     @stack('scripts')
+
+    <!-- Initialize Bootstrap Dropdowns -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var dropdownToggle = document.getElementById('userDropdown');
+        var dropdownMenu = dropdownToggle?.nextElementSibling;
+
+        if (dropdownToggle && dropdownMenu) {
+          // Ensure dropdown is hidden initially
+          dropdownMenu.style.display = 'none';
+
+          // Try Bootstrap first
+          if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+            try {
+              var dropdown = new bootstrap.Dropdown(dropdownToggle);
+              return;
+            } catch(e) {
+              console.log('Bootstrap dropdown failed, using fallback');
+            }
+          }
+
+          // Fallback: Manual dropdown toggle
+          dropdownToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Close other dropdowns
+            document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
+              if (menu !== dropdownMenu) {
+                menu.style.display = 'none';
+              }
+            });
+
+            // Toggle current dropdown
+            if (dropdownMenu.style.display === 'block' || dropdownMenu.style.display === '') {
+              dropdownMenu.style.display = 'none';
+            } else {
+              dropdownMenu.style.display = 'block';
+            }
+          });
+
+          // Close dropdown when clicking outside
+          document.addEventListener('click', function(e) {
+            if (dropdownToggle && dropdownMenu) {
+              if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                dropdownMenu.style.display = 'none';
+              }
+            }
+          });
+        }
+      });
+    </script>
     <!--end::Script-->
   </body>
   <!--end::Body-->

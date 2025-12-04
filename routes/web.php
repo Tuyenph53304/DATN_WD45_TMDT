@@ -44,3 +44,12 @@ Route::middleware('auth')->group(function () {
 });
 Route::get('/payment/callback', [PaymentController::class, 'callback'])->name('payment.callback');
 Route::post('/payment/ipn', [PaymentController::class, 'ipn'])->name('payment.ipn'); // MoMo IPN
+
+// User Profile routes
+Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
+    Route::get('/profile', [UserController::class, 'profile'])->name('profile');
+    Route::get('/profile/edit', [UserController::class, 'editProfile'])->name('profile.edit');
+    Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
+    Route::get('/orders', [UserController::class, 'orders'])->name('orders');
+    Route::get('/orders/{id}', [UserController::class, 'orderDetail'])->name('orders.show');
+});
