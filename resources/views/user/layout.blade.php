@@ -115,10 +115,16 @@
                 <small class="d-none d-lg-block">Yêu thích</small>
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">0</span>
               </a>
-              <a href="#" class="nav-link position-relative d-flex flex-column align-items-center text-center" style="min-width: 50px;">
+              <a href="{{ route('cart.index') }}" class="nav-link position-relative d-flex flex-column align-items-center text-center" style="min-width: 50px;">
                 <i class="bi bi-cart-fill" style="font-size: 1.75rem; color: var(--primary-color);"></i>
                 <small class="d-none d-lg-block">Giỏ hàng</small>
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">0</span>
+                @auth
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-count-badge" style="font-size: 0.7rem;">
+                  {{ \App\Models\CartItem::where('user_id', Auth::id())->sum('quantity') }}
+                </span>
+                @else
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-count-badge" style="font-size: 0.7rem;">0</span>
+                @endauth
               </a>
               @auth
                 <div class="dropdown">
