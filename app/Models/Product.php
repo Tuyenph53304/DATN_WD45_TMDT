@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+use App\Models\WishlistItem;
 class Product extends Model
 {
     protected $fillable = [
@@ -30,5 +30,13 @@ class Product extends Model
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class);
+    }
+
+    /**
+     * Get the wishlist items for the product.
+     */
+    public function wishlistItems(): HasMany
+    {
+        return $this->hasMany(WishlistItem::class);
     }
 }
