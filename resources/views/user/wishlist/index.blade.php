@@ -19,7 +19,6 @@
                     @foreach ($wishlistItems as $item)
                         @php
                             $product = $item->product;
-                            // Lấy variant đầu tiên để hiển thị thông tin cơ bản
                             $defaultVariant = $product->variants->first();
                         @endphp
                         <div class="list-group-item list-group-item-action wishlist-item-row p-3 mb-3 border rounded-3 shadow-sm">

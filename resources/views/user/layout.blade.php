@@ -20,8 +20,7 @@
         rel="stylesheet">
     <!--end::Fonts-->
     <!--begin::Third Party Plugin(OverlayScrollbars)-->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/styles/overlayscrollbars.min.css"
-        integrity="sha256-tZHrRjVqNSRyWg2wbppGnT833E/Ys0DHWGwT04GiqQg=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/styles/overlayscrollbars.min.css" />
     <!--end::Third Party Plugin(OverlayScrollbars)-->
     <!--begin::Third Party Plugin(Bootstrap Icons)-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
@@ -631,8 +630,7 @@
 
     <!--begin::Script-->
     <!--begin::Third Party Plugin(OverlayScrollbars)-->
-    <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/browser/overlayscrollbars.browser.es6.min.js"
-        integrity="sha256-NRZchA7P2CnyKjXgCBo6E2pEjB25E9K+1x1h8kMHzqE=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/browser/overlayscrollbars.browser.es6.min.js"></script>
     <!--end::Third Party Plugin(OverlayScrollbars)-->
     <!--begin::Required Plugin(popperjs for Bootstrap 5)-->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
@@ -640,8 +638,7 @@
     </script>
     <!--end::Required Plugin(popperjs for Bootstrap 5)-->
     <!--begin::Required Plugin(Bootstrap 5)-->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
-        integrity="sha384-0pUGZvbkm6XF6gxjEel66kUFT4PmyU/iibgs7cKtu77u1Y6e7MkLz79Dp0nuX6D1" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js">
     </script>
     <!--end::Required Plugin(Bootstrap 5)-->
     <!--begin::Required Plugin(AdminLTE)-->
@@ -773,12 +770,16 @@
 
                         if (!{{ Auth::check() ? 'true' : 'false' }}) {
                             alert('Vui lòng đăng nhập để sử dụng tính năng yêu thích.');
-                            window.location.href = "{{ route('login') }}"; // Redirect to login
+                            window.location.href = "{{ route('login') }}";
                             return;
                         }
 
                         const productId = this.getAttribute('data-product-id');
-                        const icon = this.querySelector('i.bi-heart');
+                        const icon = this.querySelector('i');
+                        if (!icon) {
+                            console.error("Icon element not found inside the button!");
+                            return; // Ngăn không cho mã chạy tiếp nếu không tìm thấy icon
+                        }
                         const isAdded = icon.classList.contains('bi-heart-fill');
 
                         fetch('{{ route('api.wishlist.toggle') }}', {
@@ -801,13 +802,18 @@
                                 } else if (data.status === 'removed') {
                                     icon.classList.remove('bi-heart-fill');
                                     icon.classList.add('bi-heart');
-                                    alert(data.message);
+                                    // alert(data.message);
 
                                     // Nếu đang ở trang wishlist, xóa item đó khỏi DOM
                                     if (window.location.pathname.includes('/wishlist')) {
                                         const row = button.closest('.wishlist-item-row');
+                                        console.log('Đang ở trang Wishlist. Phần tử cần xóa:', row);
                                         if (row) {
                                             row.remove();
+                                        } else {
+                                            console.error(
+                                                'Không tìm thấy phần tử .wishlist-item-row để xóa!'
+                                            );
                                         }
                                     }
                                 }
