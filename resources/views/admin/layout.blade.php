@@ -534,6 +534,12 @@
             <span>Quản lý Voucher</span>
           </a>
         </li>
+        <li class="nav-item">
+          <a href="{{ route('admin.reviews.index') }}" class="nav-link {{ request()->routeIs('admin.reviews*') ? 'active' : '' }}">
+            <i class="bi bi-star-fill"></i>
+            <span>Quản lý Đánh giá</span>
+          </a>
+        </li>
       </ul>
     </nav>
   </aside>
