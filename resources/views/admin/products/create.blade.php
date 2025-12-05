@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <label class="form-label"><strong>${attr.name}:</strong></label>
           <select class="form-control attribute-select" name="variants[${index}][attribute_values][]" required>
             <option value="">Chọn ${attr.name}</option>
-            ${attr.values.map(val => `<option value="${val.id}">${val.value}</option>`).join('')}
+            ${attr.attribute_values.map(val => `<option value="${val.id}">${val.value}</option>`).join('')}
           </select>
         </div>
       `;
@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   <label class="form-label small">${attr.name}:</label>
                   <select class="form-control form-control-sm attribute-select" name="variants[${index}][attribute_values][]" required>
                     <option value="">Chọn ${attr.name}</option>
-                    ${attr.values.map(val => `<option value="${val.id}">${val.value}</option>`).join('')}
+                    ${attr.attribute_values.map(val => `<option value="${val.id}">${val.value}</option>`).join('')}
                   </select>
                 </div>
               `).join('')}
