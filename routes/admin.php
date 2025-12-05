@@ -6,7 +6,7 @@ use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminCategoryController;
 use App\Http\Controllers\Admin\AdminVoucherController;
-use App\Http\Controllers\Admin\AdminBannerController;
+use App\Http\Controllers\Admin\AdminNewsController;
 use Illuminate\Support\Facades\Route;
 
 // ============================================
@@ -38,6 +38,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Quản lý Vouchers
     Route::resource('vouchers', AdminVoucherController::class);
 
-    // Quản lý Banners
-    Route::resource('banners', AdminBannerController::class);
+    // Quản lý News
+    Route::resource('news', AdminNewsController::class);
 });
