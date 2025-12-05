@@ -6,7 +6,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\WishlistItem;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -98,5 +99,19 @@ class User extends Authenticatable
     public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Get the wishlist items for the user.
+     */
+    public function wishlistItems(): HasMany
+    {
+        return $this->hasMany(WishlistItem::class);
+    }
+
+    // THÊM PHƯƠNG THỨC HỖ TRỢ ĐỂ KIỂM TRA SẢN PHẨM CÓ TRONG WISHLIST KHÔNG
+    public function hasInWishlist($productId)
+    {
+        return $this->wishlistItems()->where('product_id', $productId)->exists();
     }
 }

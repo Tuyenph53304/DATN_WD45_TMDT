@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\WishlistController;
 
 // ============================================
 // USER ROUTES (FRONTEND)
@@ -24,6 +25,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
     Route::put('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{id}', [CartController::class, 'remove'])->name('cart.remove');
+    // Wishlist routes
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
 });
 
 // API routes cho giỏ hàng (có thể dùng không cần auth nếu cần)
@@ -35,6 +38,11 @@ Route::delete('/api/cart/{id}', [CartController::class, 'remove'])->name('api.ca
 Route::post('/api/voucher/validate', [VoucherController::class, 'validate'])->name('api.voucher.validate');
 Route::post('/voucher/apply', [VoucherController::class, 'apply'])->name('voucher.apply');
 Route::post('/voucher/remove', [VoucherController::class, 'remove'])->name('voucher.remove');
+
+// API routes cho Wishlist
+Route::middleware('auth')->group(function () {
+    Route::post('/api/wishlist/toggle', [WishlistController::class, 'toggle'])->name('api.wishlist.toggle');
+});
 
 // Payment routes
 Route::middleware('auth')->group(function () {
