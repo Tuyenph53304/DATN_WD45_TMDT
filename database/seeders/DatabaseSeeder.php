@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class, // ProductSeeder phải chạy sau AttributeSeeder
             ShippingAddressSeeder::class, // ShippingAddressSeeder phải chạy sau UserSeeder
             VoucherSeeder::class,
+            BannerSeeder::class,
         ]);
     }
 }
