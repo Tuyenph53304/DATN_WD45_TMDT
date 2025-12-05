@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Admin\AdminBannerController;
+use App\Http\Controllers\Admin\AdminNewsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +12,6 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-// Banner API routes
-Route::post('/banners/{banner}/toggle-active', [AdminBannerController::class, 'toggleActive'])->middleware('auth', 'admin');
+// News API routes
+Route::post('/news/{news}/toggle-published', [AdminNewsController::class, 'togglePublished'])->middleware('auth', 'admin');
 
