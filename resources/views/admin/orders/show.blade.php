@@ -42,17 +42,72 @@
           <tr>
             <th>Trạng thái</th>
             <td>
-              <form action="{{ route('admin.orders.updateStatus', $order) }}" method="POST" class="d-inline">
-                @csrf
-                @method('PUT')
-                <select name="status" class="form-control d-inline-block w-auto" onchange="this.form.submit()">
-                  <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Chờ xử lý</option>
-                  <option value="processing" {{ $order->status === 'processing' ? 'selected' : '' }}>Đang xử lý</option>
-                  <option value="shipped" {{ $order->status === 'shipped' ? 'selected' : '' }}>Đang giao</option>
-                  <option value="completed" {{ $order->status === 'completed' ? 'selected' : '' }}>Hoàn thành</option>
-                  <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
-                </select>
-              </form>
+              @php
+                $isLocked = $order->isFinalStatus();
+                $statusConfig = config('constants.order_status.' . $order->status, null);
+                $statusLabel = $statusConfig['label'] ?? $order->status;
+                $statusColor = $statusConfig['color'] ?? '#6B7280';
+                $statusBadge = [
+                  'pending_confirmation' => 'bg-warning',
+                  'confirmed' => 'bg-info',
+                  'shipping' => 'bg-primary',
+                  'delivered' => 'bg-info',
+                  'completed' => 'bg-success',
+                  'cancelled' => 'bg-danger',
+                  'delivery_failed' => 'bg-danger',
+                ];
+                $badgeClass = $statusBadge[$order->status] ?? 'bg-secondary';
+                $canTransitionTo = $statusConfig['can_transition_to'] ?? [];
+              @endphp
+
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge {{ $badgeClass }}" style="background-color: {{ $statusColor }};">
+                  {{ $statusLabel }}
+                </span>
+
+                @if($isLocked)
+                  <small class="text-danger fw-bold">
+                    <i class="bi bi-lock-fill me-1"></i> Không thể sửa
+                  </small>
+                @else
+                  @if($order->status === 'pending_confirmation')
+                    <form action="{{ route('admin.orders.confirm', $order) }}" method="POST" class="d-inline">
+                      @csrf
+                      <button type="submit" class="btn btn-success btn-sm">
+                        <i class="bi bi-check-circle me-1"></i> Xác nhận đơn hàng
+                      </button>
+                    </form>
+                    <form action="{{ route('admin.orders.confirmCancel', $order) }}" method="POST" class="d-inline">
+                      @csrf
+                      <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?')">
+                        <i class="bi bi-x-circle me-1"></i> Xác nhận hủy
+                      </button>
+                    </form>
+                  @else
+                    <form action="{{ route('admin.orders.updateStatus', $order) }}" method="POST" class="d-inline">
+                      @csrf
+                      @method('PUT')
+                      <select name="status" class="form-select form-select-sm d-inline-block w-auto" style="min-width: 180px;" onchange="this.form.submit()">
+                        <option value="">-- Chuyển trạng thái --</option>
+                        @foreach($canTransitionTo as $nextStatus)
+                          @php
+                            $nextStatusConfig = config('constants.order_status.' . $nextStatus, null);
+                            $nextStatusLabel = $nextStatusConfig['label'] ?? $nextStatus;
+                          @endphp
+                          <option value="{{ $nextStatus }}">→ {{ $nextStatusLabel }}</option>
+                        @endforeach
+                      </select>
+                    </form>
+                  @endif
+                @endif
+              </div>
+
+              @if($isLocked)
+                <div class="alert alert-warning mt-2 mb-0 py-2 px-3">
+                  <i class="bi bi-exclamation-triangle me-2"></i>
+                  <strong>Luồng mua hàng đã kết thúc.</strong> Không thể cập nhật trạng thái đơn hàng đã {{ $statusLabel }}.
+                </div>
+              @endif
             </td>
           </tr>
           <tr>

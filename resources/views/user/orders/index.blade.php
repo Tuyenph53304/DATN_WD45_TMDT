@@ -55,17 +55,12 @@
                 </div>
                 <div class="col-md-2">
                   <div class="small text-muted">Trạng thái</div>
-                  @if($order->status === 'pending')
-                    <span class="badge bg-warning">Chờ xử lý</span>
-                  @elseif($order->status === 'processing')
-                    <span class="badge bg-info">Đang xử lý</span>
-                  @elseif($order->status === 'shipped')
-                    <span class="badge bg-primary">Đang giao</span>
-                  @elseif($order->status === 'completed')
-                    <span class="badge bg-success">Hoàn thành</span>
-                  @elseif($order->status === 'cancelled')
-                    <span class="badge bg-danger">Đã hủy</span>
-                  @endif
+                  @php
+                    $statusConfig = config('constants.order_status.' . $order->status, null);
+                    $statusLabel = $statusConfig['label'] ?? $order->status;
+                    $statusColor = $statusConfig['color'] ?? '#6B7280';
+                  @endphp
+                  <span class="badge" style="background-color: {{ $statusColor }};">{{ $statusLabel }}</span>
                 </div>
                 <div class="col-md-2">
                   <div class="small text-muted">Thanh toán</div>

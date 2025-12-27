@@ -49,16 +49,38 @@
             <div class="col-md-6">
               <div class="small text-muted">Trạng thái đơn hàng</div>
               <div>
-                @if($order->status === 'pending')
-                  <span class="badge bg-warning">Chờ xử lý</span>
-                @elseif($order->status === 'processing')
-                  <span class="badge bg-info">Đang xử lý</span>
-                @elseif($order->status === 'shipped')
-                  <span class="badge bg-primary">Đang giao</span>
-                @elseif($order->status === 'completed')
-                  <span class="badge bg-success">Hoàn thành</span>
-                @elseif($order->status === 'cancelled')
-                  <span class="badge bg-danger">Đã hủy</span>
+                @php
+                  $statusConfig = config('constants.order_status.' . $order->status, null);
+                  $statusLabel = $statusConfig['label'] ?? $order->status;
+                  $statusColor = $statusConfig['color'] ?? '#6B7280';
+                @endphp
+                <span class="badge" style="background-color: {{ $statusColor }};">{{ $statusLabel }}</span>
+                
+                @if($order->canCancelByCustomer())
+                  <form action="{{ route('user.orders.cancel', $order->id) }}" method="POST" class="d-inline ms-2">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?')">
+                      <i class="bi bi-x-circle me-1"></i> Hủy đơn
+                    </button>
+                  </form>
+                @endif
+                
+                @if($order->canConfirmByCustomer())
+                  <form action="{{ route('user.orders.confirmReceived', $order->id) }}" method="POST" class="d-inline ms-2">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Bạn đã nhận được hàng?')">
+                      <i class="bi bi-check-circle me-1"></i> Xác nhận nhận hàng
+                    </button>
+                  </form>
+                @endif
+                
+                @if($order->canReturnByCustomer())
+                  <form action="{{ route('user.orders.return', $order->id) }}" method="POST" class="d-inline ms-2">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('Bạn có chắc muốn hoàn hàng?')">
+                      <i class="bi bi-arrow-return-left me-1"></i> Hoàn hàng
+                    </button>
+                  </form>
                 @endif
               </div>
             </div>

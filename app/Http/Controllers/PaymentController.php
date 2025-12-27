@@ -86,7 +86,7 @@ class PaymentController extends Controller
                 'user_id' => $user->id,
                 'shipping_address_id' => $shippingAddressId,
                 'total_price' => $subtotal,
-                'status' => $paymentMethod === 'cod' ? 'processing' : 'pending',
+                'status' => 'pending_confirmation', // Trạng thái ban đầu: chờ xác nhận
                 'payment_method' => $paymentMethod,
                 'payment_status' => $paymentMethod === 'cod' ? 'paid' : 'pending',
                 'voucher_code' => $voucher ? $voucher->code : null,
@@ -219,9 +219,9 @@ class PaymentController extends Controller
         // Kiểm tra result code
         // 0 = Thành công
         if ($result['result_code'] == '0') {
-            // Cập nhật đơn hàng
+            // Cập nhật đơn hàng - thanh toán thành công nhưng vẫn chờ xác nhận
             $order->payment_status = 'paid';
-            $order->status = 'processing';
+            $order->status = 'pending_confirmation'; // Chờ admin xác nhận
             $order->transaction_id = $result['transaction_id'];
             $order->save();
 
@@ -320,7 +320,7 @@ class PaymentController extends Controller
         // Cập nhật đơn hàng nếu thành công
         if ($result['result_code'] == '0' && $order->payment_status != 'paid') {
             $order->payment_status = 'paid';
-            $order->status = 'processing';
+            $order->status = 'pending_confirmation'; // Chờ admin xác nhận
             $order->transaction_id = $result['transaction_id'];
             $order->save();
 

@@ -74,7 +74,7 @@ class UserController extends Controller
             ->where('payment_status', 'paid')
             ->sum('final_amount');
         $pendingOrders = Order::where('user_id', $user->id)
-            ->where('status', 'pending')
+            ->where('status', 'pending_confirmation')
             ->count();
 
         return view('user.profile.index', compact('user', 'totalOrders', 'totalSpent', 'pendingOrders'));
@@ -287,5 +287,78 @@ class UserController extends Controller
 
         return redirect()->route('user.profile.edit')
             ->with('success', 'Đã đặt địa chỉ làm mặc định!');
+    }
+
+    /**
+     * Khách hàng hủy đơn hàng (chỉ khi ở trạng thái "chờ xác nhận")
+     */
+    public function cancelOrder($id)
+    {
+        $user = Auth::user();
+        $order = Order::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        // Chỉ cho phép hủy khi đơn hàng ở trạng thái "chờ xác nhận"
+        if (!$order->canCancelByCustomer()) {
+            return redirect()->route('user.orders.show', $order->id)
+                ->with('error', 'Bạn chỉ có thể hủy đơn hàng khi đơn hàng đang ở trạng thái "Chờ xác nhận"!');
+        }
+
+        // Đơn hàng sẽ chuyển sang trạng thái "chờ xác nhận hủy" - admin sẽ xác nhận
+        // Ở đây ta giữ nguyên trạng thái pending_confirmation và admin sẽ xác nhận hủy
+        // Hoặc có thể tạo một trường cancelled_request = true để admin biết khách muốn hủy
+        
+        // Tạm thời: đơn hàng vẫn ở pending_confirmation, admin sẽ xác nhận hủy
+        // Có thể thêm một trường cancelled_request vào bảng orders nếu cần
+        
+        return redirect()->route('user.orders.show', $order->id)
+            ->with('success', 'Yêu cầu hủy đơn hàng đã được gửi. Vui lòng chờ admin xác nhận!');
+    }
+
+    /**
+     * Khách hàng xác nhận nhận hàng (khi đơn hàng ở trạng thái "đã giao hàng")
+     */
+    public function confirmReceived($id)
+    {
+        $user = Auth::user();
+        $order = Order::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        // Chỉ cho phép xác nhận khi đơn hàng ở trạng thái "đã giao hàng"
+        if (!$order->canConfirmByCustomer()) {
+            return redirect()->route('user.orders.show', $order->id)
+                ->with('error', 'Bạn chỉ có thể xác nhận nhận hàng khi đơn hàng đã được giao!');
+        }
+
+        // Chuyển trạng thái sang "thành công"
+        $order->update(['status' => 'completed']);
+
+        return redirect()->route('user.orders.show', $order->id)
+            ->with('success', 'Cảm ơn bạn đã xác nhận nhận hàng!');
+    }
+
+    /**
+     * Khách hàng hoàn hàng (khi đơn hàng ở trạng thái "đã giao hàng")
+     */
+    public function returnOrder($id)
+    {
+        $user = Auth::user();
+        $order = Order::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        // Chỉ cho phép hoàn hàng khi đơn hàng ở trạng thái "đã giao hàng"
+        if (!$order->canReturnByCustomer()) {
+            return redirect()->route('user.orders.show', $order->id)
+                ->with('error', 'Bạn chỉ có thể hoàn hàng khi đơn hàng đã được giao!');
+        }
+
+        // Chuyển trạng thái sang "giao hàng không thành công"
+        $order->update(['status' => 'delivery_failed']);
+
+        return redirect()->route('user.orders.show', $order->id)
+            ->with('success', 'Yêu cầu hoàn hàng đã được ghi nhận!');
     }
 }

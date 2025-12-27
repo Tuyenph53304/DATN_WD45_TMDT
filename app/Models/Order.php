@@ -61,4 +61,90 @@ class Order extends Model
         }
         return null;
     }
+
+    /**
+     * Kiểm tra xem đơn hàng có thể chuyển sang trạng thái khác không
+     */
+    public function canTransitionTo($newStatus): bool
+    {
+        $statusConfig = config('constants.order_status.' . $this->status, null);
+        if (!$statusConfig || !is_array($statusConfig)) {
+            return false;
+        }
+
+        return in_array($newStatus, $statusConfig['can_transition_to'] ?? []);
+    }
+
+    /**
+     * Kiểm tra xem đơn hàng có ở trạng thái cuối cùng không (không thể thay đổi)
+     */
+    public function isFinalStatus(): bool
+    {
+        $statusConfig = config('constants.order_status.' . $this->status, null);
+        if (!$statusConfig || !is_array($statusConfig)) {
+            // Nếu không tìm thấy config, coi như không phải trạng thái cuối
+            return false;
+        }
+        return $statusConfig['is_final'] ?? false;
+    }
+
+    /**
+     * Kiểm tra xem khách hàng có thể hủy đơn hàng không
+     */
+    public function canCancelByCustomer(): bool
+    {
+        $statusConfig = config('constants.order_status.' . $this->status, null);
+        if (!$statusConfig || !is_array($statusConfig)) {
+            return false;
+        }
+        return $statusConfig['can_cancel_by_customer'] ?? false;
+    }
+
+    /**
+     * Kiểm tra xem khách hàng có thể xác nhận nhận hàng không
+     */
+    public function canConfirmByCustomer(): bool
+    {
+        $statusConfig = config('constants.order_status.' . $this->status, null);
+        if (!$statusConfig || !is_array($statusConfig)) {
+            return false;
+        }
+        return $statusConfig['can_confirm_by_customer'] ?? false;
+    }
+
+    /**
+     * Kiểm tra xem khách hàng có thể hoàn hàng không
+     */
+    public function canReturnByCustomer(): bool
+    {
+        $statusConfig = config('constants.order_status.' . $this->status, null);
+        if (!$statusConfig || !is_array($statusConfig)) {
+            return false;
+        }
+        return $statusConfig['can_return_by_customer'] ?? false;
+    }
+
+    /**
+     * Lấy label của trạng thái hiện tại
+     */
+    public function getStatusLabel(): string
+    {
+        $statusConfig = config('constants.order_status.' . $this->status, null);
+        if (!$statusConfig || !is_array($statusConfig)) {
+            return $this->status;
+        }
+        return $statusConfig['label'] ?? $this->status;
+    }
+
+    /**
+     * Lấy màu của trạng thái hiện tại
+     */
+    public function getStatusColor(): string
+    {
+        $statusConfig = config('constants.order_status.' . $this->status, null);
+        if (!$statusConfig || !is_array($statusConfig)) {
+            return '#6B7280';
+        }
+        return $statusConfig['color'] ?? '#6B7280';
+    }
 }

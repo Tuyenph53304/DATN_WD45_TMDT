@@ -26,9 +26,13 @@ class AdminDashboardController extends Controller
 
         // Thống kê Orders
         $totalOrders = Order::count();
-        $pendingOrders = Order::where('status', 'pending')->count();
-        $processingOrders = Order::where('status', 'processing')->count();
+        $pendingOrders = Order::where('status', 'pending_confirmation')->count();
+        $confirmedOrders = Order::where('status', 'confirmed')->count();
+        $shippingOrders = Order::where('status', 'shipping')->count();
+        $deliveredOrders = Order::where('status', 'delivered')->count();
         $completedOrders = Order::where('status', 'completed')->count();
+        $cancelledOrders = Order::where('status', 'cancelled')->count();
+        $failedOrders = Order::where('status', 'delivery_failed')->count();
         $totalRevenue = Order::where('payment_status', 'paid')->sum('final_amount');
         $todayRevenue = Order::where('payment_status', 'paid')
             ->whereDate('created_at', today())
@@ -77,8 +81,12 @@ class AdminDashboardController extends Controller
             'recentUsers',
             'totalOrders',
             'pendingOrders',
-            'processingOrders',
+            'confirmedOrders',
+            'shippingOrders',
+            'deliveredOrders',
             'completedOrders',
+            'cancelledOrders',
+            'failedOrders',
             'totalRevenue',
             'todayRevenue',
             'recentOrders',
