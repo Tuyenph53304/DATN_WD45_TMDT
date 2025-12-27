@@ -179,6 +179,77 @@ return [
     ],
 
     // ============================================
+    // ORDER STATUS - 7 trạng thái đơn hàng
+    // ============================================
+    'order_status' => [
+        'pending_confirmation' => [
+            'value' => 'pending_confirmation',
+            'label' => 'Chờ xác nhận',
+            'description' => 'Đơn hàng mới được tạo, chờ admin xác nhận hoặc khách hàng có thể hủy',
+            'color' => '#F59E0B', // Amber
+            'can_transition_to' => ['confirmed', 'cancelled'],
+            'is_final' => false,
+            'can_cancel_by_customer' => true, // Khách hàng có thể hủy
+        ],
+        'confirmed' => [
+            'value' => 'confirmed',
+            'label' => 'Đã xác nhận',
+            'description' => 'Admin đã xác nhận đơn hàng, chờ vận chuyển đến',
+            'color' => '#3B82F6', // Blue
+            'can_transition_to' => ['shipping'],
+            'is_final' => false,
+            'can_cancel_by_customer' => false,
+        ],
+        'shipping' => [
+            'value' => 'shipping',
+            'label' => 'Đang giao hàng',
+            'description' => 'Đơn hàng đang được vận chuyển đến khách hàng',
+            'color' => '#8B5CF6', // Purple
+            'can_transition_to' => ['delivered'],
+            'is_final' => false,
+            'can_cancel_by_customer' => false,
+        ],
+        'delivered' => [
+            'value' => 'delivered',
+            'label' => 'Đã giao hàng',
+            'description' => 'Đơn hàng đã đến tay khách hàng, chờ khách xác nhận nhận hàng hoặc hoàn hàng',
+            'color' => '#06B6D4', // Cyan
+            'can_transition_to' => ['completed', 'delivery_failed'],
+            'is_final' => false,
+            'can_cancel_by_customer' => false,
+            'can_confirm_by_customer' => true, // Khách hàng có thể xác nhận nhận hàng
+            'can_return_by_customer' => true, // Khách hàng có thể hoàn hàng
+        ],
+        'completed' => [
+            'value' => 'completed',
+            'label' => 'Thành công',
+            'description' => 'Đơn hàng đã hoàn thành, khách hàng đã xác nhận nhận hàng',
+            'color' => '#10B981', // Emerald
+            'can_transition_to' => [], // Không thể chuyển sang trạng thái khác
+            'is_final' => true,
+            'can_cancel_by_customer' => false,
+        ],
+        'cancelled' => [
+            'value' => 'cancelled',
+            'label' => 'Đã hủy',
+            'description' => 'Đơn hàng đã bị hủy',
+            'color' => '#F43F5E', // Rose
+            'can_transition_to' => [], // Không thể chuyển sang trạng thái khác
+            'is_final' => true,
+            'can_cancel_by_customer' => false,
+        ],
+        'delivery_failed' => [
+            'value' => 'delivery_failed',
+            'label' => 'Giao hàng không thành công',
+            'description' => 'Khách hàng đã hoàn hàng, giao hàng không thành công',
+            'color' => '#EF4444', // Red
+            'can_transition_to' => [], // Không thể chuyển sang trạng thái khác
+            'is_final' => true,
+            'can_cancel_by_customer' => false,
+        ],
+    ],
+
+    // ============================================
     // PAYMENT METHODS
     // ============================================
     'payment' => [

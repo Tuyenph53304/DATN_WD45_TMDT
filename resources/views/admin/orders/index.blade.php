@@ -19,11 +19,14 @@
         <div class="col-md-2">
           <select name="status" class="form-control">
             <option value="">Tất cả trạng thái</option>
-            <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Chờ xử lý</option>
-            <option value="processing" {{ request('status') === 'processing' ? 'selected' : '' }}>Đang xử lý</option>
-            <option value="shipped" {{ request('status') === 'shipped' ? 'selected' : '' }}>Đang giao</option>
-            <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Hoàn thành</option>
-            <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
+            @php
+              $allStatuses = config('constants.order_status', []);
+            @endphp
+            @foreach($allStatuses as $statusKey => $statusConfig)
+              <option value="{{ $statusKey }}" {{ request('status') === $statusKey ? 'selected' : '' }}>
+                {{ $statusConfig['label'] }}
+              </option>
+            @endforeach
           </select>
         </div>
         <div class="col-md-2">
@@ -72,17 +75,12 @@
             <td>{{ $order->user->name ?? 'N/A' }}</td>
             <td>{{ number_format($order->final_amount) }}₫</td>
             <td>
-              @if($order->status === 'pending')
-                <span class="badge bg-warning">Chờ xử lý</span>
-              @elseif($order->status === 'processing')
-                <span class="badge bg-info">Đang xử lý</span>
-              @elseif($order->status === 'shipped')
-                <span class="badge bg-primary">Đang giao</span>
-              @elseif($order->status === 'completed')
-                <span class="badge bg-success">Hoàn thành</span>
-              @elseif($order->status === 'cancelled')
-                <span class="badge bg-danger">Đã hủy</span>
-              @endif
+              @php
+                $statusConfig = config('constants.order_status.' . $order->status, null);
+                $statusLabel = $statusConfig['label'] ?? $order->status;
+                $statusColor = $statusConfig['color'] ?? '#6B7280';
+              @endphp
+              <span class="badge" style="background-color: {{ $statusColor }};">{{ $statusLabel }}</span>
             </td>
             <td>
               @if($order->payment_status === 'paid')

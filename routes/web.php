@@ -66,4 +66,9 @@ Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
     Route::put('/shipping-address/{id}', [UserController::class, 'updateShippingAddress'])->name('shipping-address.update');
     Route::delete('/shipping-address/{id}', [UserController::class, 'deleteShippingAddress'])->name('shipping-address.delete');
     Route::post('/shipping-address/{id}/set-default', [UserController::class, 'setDefaultShippingAddress'])->name('shipping-address.set-default');
+
+    // Order actions routes
+    Route::post('/orders/{id}/cancel', [UserController::class, 'cancelOrder'])->name('orders.cancel');
+    Route::post('/orders/{id}/confirm-received', [UserController::class, 'confirmReceived'])->name('orders.confirmReceived');
+    Route::post('/orders/{id}/return', [UserController::class, 'returnOrder'])->name('orders.return');
 });

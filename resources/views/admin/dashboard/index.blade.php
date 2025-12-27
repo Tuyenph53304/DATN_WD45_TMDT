@@ -163,15 +163,12 @@
             <td>{{ $order->user->name ?? 'N/A' }}</td>
             <td><strong>{{ number_format($order->final_amount) }}₫</strong></td>
             <td>
-              @if($order->status === 'pending')
-                <span class="badge badge-modern bg-warning">Chờ xử lý</span>
-              @elseif($order->status === 'processing')
-                <span class="badge badge-modern bg-info">Đang xử lý</span>
-              @elseif($order->status === 'completed')
-                <span class="badge badge-modern bg-success">Hoàn thành</span>
-              @else
-                <span class="badge badge-modern bg-secondary">{{ $order->status }}</span>
-              @endif
+              @php
+                $statusConfig = config('constants.order_status.' . $order->status, null);
+                $statusLabel = $statusConfig['label'] ?? $order->status;
+                $statusColor = $statusConfig['color'] ?? '#6B7280';
+              @endphp
+              <span class="badge badge-modern" style="background-color: {{ $statusColor }};">{{ $statusLabel }}</span>
             </td>
             <td>
               @if($order->payment_status === 'paid')
