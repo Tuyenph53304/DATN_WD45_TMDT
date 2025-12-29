@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminCategoryController;
 use App\Http\Controllers\Admin\AdminVoucherController;
+use App\Http\Controllers\Admin\AdminBannerController;
 use Illuminate\Support\Facades\Route;
 
 // ============================================
@@ -29,6 +30,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::put('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::post('/orders/{order}/confirm', [AdminOrderController::class, 'confirmOrder'])->name('orders.confirm');
+    Route::post('/orders/{order}/confirm-cancel', [AdminOrderController::class, 'confirmCancel'])->name('orders.confirmCancel');
     Route::delete('/orders/{order}', [AdminOrderController::class, 'destroy'])->name('orders.destroy');
 
     // Quản lý Categories
@@ -36,4 +39,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Quản lý Vouchers
     Route::resource('vouchers', AdminVoucherController::class);
+
+    // Quản lý Banners
+    Route::resource('banners', AdminBannerController::class);
 });

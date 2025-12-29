@@ -33,6 +33,22 @@
                             @endif
                         </div>
 
+                        @auth
+                            @php
+                                // Giả định $product là đối tượng Product hiện tại
+                                $inWishlist = Auth::user()->hasInWishlist($product->id);
+                            @endphp
+                            <button class="btn btn-outline-danger toggle-wishlist-btn" data-product-id="{{ $product->id }}">
+                                <i class="bi bi-heart{{ $inWishlist ? '-fill' : '' }} me-2" style="font-size: 1.2rem;"></i>
+                                {{ $inWishlist ? 'Đã yêu thích' : 'Thêm vào yêu thích' }}
+                            </button>
+                        @else
+                            <a href="{{ route('login') }}" class="btn btn-outline-danger">
+                                <i class="bi bi-heart me-2" style="font-size: 1.2rem;"></i>
+                                Thêm vào yêu thích
+                            </a>
+                        @endauth
+                        
                         <!-- Variants Selection -->
                         @if ($product->variants->count() > 1)
                             <div class="mb-4">
@@ -242,6 +258,88 @@
                                             @if ($relatedVariant)
                                                 <span
                                                     class="price-new">{{ number_format($relatedVariant->price) }}₫</span>
+                                            @endif
+                                        </div>
+                                        <a href="{{ route('products.show', $related->slug) }}"
+                                            class="btn btn-primary btn-sm w-100 mt-2">
+                                            <i class="bi bi-eye"></i> Xem chi tiết
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            let selectedVariantId = {{ $defaultVariant->id ?? 'null' }};
+            let selectedVariantPrice = {{ $defaultVariant->price ?? 0 }};
+            let selectedVariantStock = {{ $defaultVariant->stock ?? 0 }};
+
+            // Variant selection
+            document.querySelectorAll('.variant-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove active class
+                    document.querySelectorAll('.variant-card').forEach(c => c.classList.remove('border-primary',
+                        'border-2'));
+
+                    // Add active class
+                    this.classList.add('border-primary', 'border-2');
+
+                    // Update selected variant
+                    selectedVariantId = this.getAttribute('data-variant-id');
+                    selectedVariantPrice = this.getAttribute('data-price');
+                    selectedVariantStock = this.getAttribute('data-stock');
+
+                    // Update price
+                    document.querySelector('#selected-variant-info h4').textContent = new Intl.NumberFormat(
+                        'vi-VN').format(selectedVariantPrice) + '₫';
+
+                    // Update stock status
+                    const stockStatus = document.querySelector('.stock-status');
+                    if (selectedVariantStock > 0) {
+                        stockStatus.className = 'stock-status in-stock';
+                        stockStatus.innerHTML = '<i class="bi bi-check-circle-fill"></i> Còn hàng';
+                        document.querySelector('.add-to-cart-btn').disabled = false;
+                        document.querySelector('.add-to-cart-btn').setAttribute('data-variant-id',
+                            selectedVariantId);
+                    } else {
+                        stockStatus.className = 'stock-status out-of-stock';
+                        stockStatus.innerHTML = '<i class="bi bi-x-circle-fill"></i> Hết hàng';
+                        document.querySelector('.add-to-cart-btn').disabled = true;
+                    }
+                });
+            });
+
+
+            <!-- Related Products -->
+            @if ($relatedProducts->count() > 0)
+                <div class="col-12 mt-5">
+                    <h4 class="fw-bold mb-4">Sản phẩm liên quan</h4>
+                    <div class="row g-4">
+                        @foreach ($relatedProducts as $related)
+                            @php
+                                $relatedVariant = $related->variants->first();
+                            @endphp
+                            <div class="col-lg-3 col-md-4 col-sm-6">
+                                <div class="card product-card h-100">
+                                    <div class="position-relative overflow-hidden" style="height: 200px;">
+                                        <img src="{{ $relatedVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop' }}"
+                                            class="card-img-top w-100 h-100" alt="{{ $related->name }}"
+                                            style="object-fit: cover;">
+                                    </div>
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <a href="{{ route('products.show', $related->slug) }}"
+                                                class="text-decoration-none text-dark">{{ $related->name }}</a>
+                                        </h6>
+                                        <div class="price-container">
+                                            @if ($relatedVariant)
+                                                <span class="price-new">{{ number_format($relatedVariant->price) }}₫</span>
                                             @endif
                                         </div>
                                         <a href="{{ route('products.show', $related->slug) }}"

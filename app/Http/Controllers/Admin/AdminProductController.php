@@ -50,7 +50,7 @@ class AdminProductController extends Controller
     public function create()
     {
         $categories = Category::where('status', true)->get();
-        $attributes = Attribute::with('values')->get();
+        $attributes = Attribute::with('attributeValues')->get();
         return view('admin.products.create', compact('categories', 'attributes'));
     }
 
@@ -105,7 +105,7 @@ class AdminProductController extends Controller
     {
         $product->load(['variants.attributeValues', 'category']);
         $categories = Category::where('status', true)->get();
-        $attributes = Attribute::with('values')->get();
+        $attributes = Attribute::with('attributeValues')->get();
         return view('admin.products.edit', compact('product', 'categories', 'attributes'));
     }
 

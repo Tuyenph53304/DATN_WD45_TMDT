@@ -57,17 +57,79 @@ class AdminOrderController extends Controller
     }
 
     /**
+     * Xác nhận đơn hàng (chuyển từ "chờ xác nhận" sang "đã xác nhận")
+     */
+    public function confirmOrder(Order $order)
+    {
+        if ($order->status !== 'pending_confirmation') {
+            return redirect()->route('admin.orders.show', $order->id)
+                ->with('error', 'Chỉ có thể xác nhận đơn hàng đang ở trạng thái "Chờ xác nhận"!');
+        }
+
+        $order->update(['status' => 'confirmed']);
+
+        return redirect()->route('admin.orders.show', $order->id)
+            ->with('success', 'Đã xác nhận đơn hàng thành công!');
+    }
+
+    /**
+     * Xác nhận hủy đơn hàng từ khách hàng
+     */
+    public function confirmCancel(Order $order)
+    {
+        if ($order->status !== 'pending_confirmation') {
+            return redirect()->route('admin.orders.show', $order->id)
+                ->with('error', 'Chỉ có thể xác nhận hủy đơn hàng đang ở trạng thái "Chờ xác nhận"!');
+        }
+
+        $order->update(['status' => 'cancelled']);
+
+        return redirect()->route('admin.orders.show', $order->id)
+            ->with('success', 'Đã xác nhận hủy đơn hàng!');
+    }
+
+    /**
      * Cập nhật status của order
+     *
+     * Quy tắc chuyển trạng thái:
+     * pending_confirmation → confirmed → shipping → delivered → completed (THÀNH CÔNG)
+     * pending_confirmation → cancelled (ĐÃ HỦY)
+     * delivered → delivery_failed (GIAO HÀNG KHÔNG THÀNH CÔNG)
+     *
+     * Trạng thái completed, cancelled, delivery_failed KHÔNG THỂ THAY ĐỔI
      */
     public function updateStatus(Request $request, Order $order)
     {
+        // Kiểm tra nếu đơn hàng đã ở trạng thái cuối cùng
+        if ($order->isFinalStatus()) {
+            return redirect()->route('admin.orders.show', $order->id)
+                ->with('error', 'Không thể cập nhật trạng thái đơn hàng đã ở trạng thái cuối cùng!');
+        }
+
         $request->validate([
-            'status' => 'required|in:pending,processing,shipped,completed,cancelled',
+            'status' => 'required|in:pending_confirmation,confirmed,shipping,delivered,completed,cancelled,delivery_failed',
         ]);
 
-        $order->update(['status' => $request->status]);
+        $newStatus = $request->status;
+        $currentStatus = $order->status;
 
-        return redirect()->route('admin.orders.show', $order->id)->with('success', 'Cập nhật trạng thái đơn hàng thành công!');
+        // Kiểm tra quá trình chuyển trạng thái hợp lệ sử dụng method từ model
+        if (!$order->canTransitionTo($newStatus)) {
+            $statusLabels = config('constants.order_status');
+            $currentLabel = $statusLabels[$currentStatus]['label'] ?? $currentStatus;
+            $newLabel = $statusLabels[$newStatus]['label'] ?? $newStatus;
+            
+            return redirect()->route('admin.orders.show', $order->id)
+                ->with('error', "Không thể chuyển từ trạng thái '{$currentLabel}' sang '{$newLabel}'!");
+        }
+
+        $order->update(['status' => $newStatus]);
+
+        $statusLabels = config('constants.order_status');
+        $newLabel = $statusLabels[$newStatus]['label'] ?? $newStatus;
+
+        return redirect()->route('admin.orders.show', $order->id)
+            ->with('success', "Đã cập nhật trạng thái đơn hàng sang '{$newLabel}' thành công!");
     }
 
     /**
