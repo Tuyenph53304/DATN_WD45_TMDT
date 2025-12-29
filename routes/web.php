@@ -5,6 +5,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WishlistController;
 
@@ -67,6 +68,20 @@ Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
     Route::delete('/shipping-address/{id}', [UserController::class, 'deleteShippingAddress'])->name('shipping-address.delete');
     Route::post('/shipping-address/{id}/set-default', [UserController::class, 'setDefaultShippingAddress'])->name('shipping-address.set-default');
 
+    // Review routers
+    // Client gửi review
+    Route::post('/products/{id}/reviews', [ReviewController::class, 'store'])
+        ->name('store');
+
+    // Xóa review của chính user
+    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])
+        ->name('destroy');
+});
+
+// Quản lý đánh giá cho admin
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+    Route::get('/reviews', [ReviewController::class, 'adminIndex'])->name('admin.reviews.index');
+    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
     // Order actions routes
     Route::post('/orders/{id}/cancel', [UserController::class, 'cancelOrder'])->name('orders.cancel');
     Route::post('/orders/{id}/confirm-received', [UserController::class, 'confirmReceived'])->name('orders.confirmReceived');

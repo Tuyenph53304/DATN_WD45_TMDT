@@ -149,6 +149,173 @@
                 </div>
             </div>
 
+            {{-- FORM VIẾT ĐÁNH GIÁ --}}
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-chat-dots"></i> Đánh giá sản phẩm</h5>
+                </div>
+                <div class="card-body">
+
+                    @auth
+                        <form action="{{ route('user.store', $product->id) }}" method="POST">
+                            @csrf
+
+                            <div class="mb-3">
+                                <label for="rating" class="form-label">Số sao</label>
+                                <select name="rating" class="form-control" required>
+                                    <option value="5">★★★★★ - Rất tốt</option>
+                                    <option value="4">★★★★☆ - Tốt</option>
+                                    <option value="3">★★★☆☆ - Tạm được</option>
+                                    <option value="2">★★☆☆☆ - Không tốt</option>
+                                    <option value="1">★☆☆☆☆ - Tệ</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Bình luận</label>
+                                <textarea name="comment" class="form-control" rows="3" placeholder="Nhập cảm nhận của bạn..."></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> Gửi đánh giá
+                            </button>
+                        </form>
+                    @else
+                        <p class="text-danger">Bạn cần <a href="/login">đăng nhập</a> để đánh giá.</p>
+                    @endauth
+                </div>
+            </div>
+
+            {{-- DANH SÁCH REVIEW --}}
+            @if ($product->reviews->count() > 0)
+                <div class="card mt-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-people"></i> Khách hàng đánh giá</h5>
+                    </div>
+
+                    <div class="card-body">
+                        @foreach ($product->reviews as $review)
+                            <div class="border-bottom pb-3 mb-3">
+                                <strong>{{ $review->user->name }}</strong>
+
+                                {{-- Hiển thị sao --}}
+                                <div>
+                                    @for ($i = 1; $i <= 5; $i++)
+                                        <i class="bi bi-star{{ $i <= $review->rating ? '-fill text-warning' : '' }}"></i>
+                                    @endfor
+                                </div>
+
+                                <div class="mt-2">
+                                    {{ $review->comment }}
+                                </div>
+
+                                <div class="text-muted small">
+                                    {{ $review->created_at->diffForHumans() }}
+                                </div>
+
+                                {{-- Xóa review (nếu là admin hoặc chính chủ) --}}
+                                @auth
+                                    @if (auth()->user()->role === 'admin' || auth()->id() == $review->user_id)
+                                        <form action="{{ route('user.destroy', $review->id) }}" method="POST"
+                                            class="mt-2">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="btn btn-danger btn-sm">
+                                                <i class="bi bi-trash"></i> Xóa
+                                            </button>
+                                        </form>
+                                    @endif
+                                @endauth
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+
+            <!-- Related Products -->
+            @if ($relatedProducts->count() > 0)
+                <div class="col-12 mt-5">
+                    <h4 class="fw-bold mb-4">Sản phẩm liên quan</h4>
+                    <div class="row g-4">
+                        @foreach ($relatedProducts as $related)
+                            @php
+                                $relatedVariant = $related->variants->first();
+                            @endphp
+                            <div class="col-lg-3 col-md-4 col-sm-6">
+                                <div class="card product-card h-100">
+                                    <div class="position-relative overflow-hidden" style="height: 200px;">
+                                        <img src="{{ $relatedVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop' }}"
+                                            class="card-img-top w-100 h-100" alt="{{ $related->name }}"
+                                            style="object-fit: cover;">
+                                    </div>
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <a href="{{ route('products.show', $related->slug) }}"
+                                                class="text-decoration-none text-dark">{{ $related->name }}</a>
+                                        </h6>
+                                        <div class="price-container">
+                                            @if ($relatedVariant)
+                                                <span
+                                                    class="price-new">{{ number_format($relatedVariant->price) }}₫</span>
+                                            @endif
+                                        </div>
+                                        <a href="{{ route('products.show', $related->slug) }}"
+                                            class="btn btn-primary btn-sm w-100 mt-2">
+                                            <i class="bi bi-eye"></i> Xem chi tiết
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            let selectedVariantId = {{ $defaultVariant->id ?? 'null' }};
+            let selectedVariantPrice = {{ $defaultVariant->price ?? 0 }};
+            let selectedVariantStock = {{ $defaultVariant->stock ?? 0 }};
+
+            // Variant selection
+            document.querySelectorAll('.variant-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove active class
+                    document.querySelectorAll('.variant-card').forEach(c => c.classList.remove('border-primary',
+                        'border-2'));
+
+                    // Add active class
+                    this.classList.add('border-primary', 'border-2');
+
+                    // Update selected variant
+                    selectedVariantId = this.getAttribute('data-variant-id');
+                    selectedVariantPrice = this.getAttribute('data-price');
+                    selectedVariantStock = this.getAttribute('data-stock');
+
+                    // Update price
+                    document.querySelector('#selected-variant-info h4').textContent = new Intl.NumberFormat(
+                        'vi-VN').format(selectedVariantPrice) + '₫';
+
+                    // Update stock status
+                    const stockStatus = document.querySelector('.stock-status');
+                    if (selectedVariantStock > 0) {
+                        stockStatus.className = 'stock-status in-stock';
+                        stockStatus.innerHTML = '<i class="bi bi-check-circle-fill"></i> Còn hàng';
+                        document.querySelector('.add-to-cart-btn').disabled = false;
+                        document.querySelector('.add-to-cart-btn').setAttribute('data-variant-id',
+                            selectedVariantId);
+                    } else {
+                        stockStatus.className = 'stock-status out-of-stock';
+                        stockStatus.innerHTML = '<i class="bi bi-x-circle-fill"></i> Hết hàng';
+                        document.querySelector('.add-to-cart-btn').disabled = true;
+                    }
+                });
+            });
+
+
             <!-- Related Products -->
             @if ($relatedProducts->count() > 0)
                 <div class="col-12 mt-5">
