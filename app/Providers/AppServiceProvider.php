@@ -21,5 +21,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // Share constants to all views
         view()->share('constants', config('constants'));
+        
+        // Share categories from database to all views
+        view()->composer('*', function ($view) {
+            $view->with('categories', \App\Models\Category::where('status', true)->get());
+        });
     }
 }

@@ -13,6 +13,8 @@ class Order extends Model
         'shipping_address_id',
         'total_price',
         'status',
+        'cancelled_request',
+        'cancel_reason',
         'payment_method',
         'payment_status',
         'transaction_id',
@@ -25,6 +27,7 @@ class Order extends Model
         'total_price' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'final_amount' => 'decimal:2',
+        'cancelled_request' => 'boolean',
     ];
 
     /**
@@ -122,6 +125,18 @@ class Order extends Model
             return false;
         }
         return $statusConfig['can_return_by_customer'] ?? false;
+    }
+
+    /**
+     * Kiểm tra xem khách hàng có thể yêu cầu hủy không (cần admin xác nhận)
+     */
+    public function canRequestCancel(): bool
+    {
+        $statusConfig = config('constants.order_status.' . $this->status, null);
+        if (!$statusConfig || !is_array($statusConfig)) {
+            return false;
+        }
+        return $statusConfig['can_request_cancel'] ?? false;
     }
 
     /**

@@ -77,12 +77,22 @@ class AdminOrderController extends Controller
      */
     public function confirmCancel(Order $order)
     {
-        if ($order->status !== 'pending_confirmation') {
+        if (!$order->cancelled_request) {
             return redirect()->route('admin.orders.show', $order->id)
-                ->with('error', 'Chỉ có thể xác nhận hủy đơn hàng đang ở trạng thái "Chờ xác nhận"!');
+                ->with('error', 'Đơn hàng này không có yêu cầu hủy!');
         }
 
-        $order->update(['status' => 'cancelled']);
+        // Chỉ cho phép xác nhận hủy khi đơn hàng từ confirmed trở đi (không phải pending_confirmation)
+        if ($order->status === 'pending_confirmation') {
+            return redirect()->route('admin.orders.show', $order->id)
+                ->with('error', 'Đơn hàng đang chờ xác nhận sẽ được hủy trực tiếp bởi khách hàng, không cần admin xác nhận!');
+        }
+
+        // Đóng luồng: chuyển sang trạng thái cancelled và reset cancelled_request
+        $order->update([
+            'status' => 'cancelled',
+            'cancelled_request' => false, // Đã xử lý yêu cầu hủy
+        ]);
 
         return redirect()->route('admin.orders.show', $order->id)
             ->with('success', 'Đã xác nhận hủy đơn hàng!');
@@ -123,7 +133,33 @@ class AdminOrderController extends Controller
                 ->with('error', "Không thể chuyển từ trạng thái '{$currentLabel}' sang '{$newLabel}'!");
         }
 
-        $order->update(['status' => $newStatus]);
+        // Chuẩn bị dữ liệu cập nhật
+        // Khi admin chọn "delivered" thì tự động chuyển sang "completed"
+        $finalStatus = $newStatus;
+        if ($newStatus === 'delivered') {
+            $finalStatus = 'completed';
+        }
+        
+        $updateData = ['status' => $finalStatus];
+
+        /**
+         * Đồng bộ trạng thái thanh toán với trạng thái đơn hàng:
+         * - Khi admin chuyển đơn sang "delivered" (đã giao hàng) hoặc "completed" (thành công),
+         *   nếu payment_status chưa là "paid" thì tự động cập nhật thành "paid".
+         *
+         * Lý do:
+         * - Đối với thanh toán online (MoMo), payment_status thường đã là "paid" từ callback.
+         * - Đối với COD, khi admin xác nhận đã giao hàng thì thực tế tiền đã được thu,
+         *   nên cần chuyển payment_status sang "paid" để thống kê doanh thu chính xác.
+         */
+        if (in_array($finalStatus, ['delivered', 'completed']) && $order->payment_status !== 'paid') {
+            $updateData['payment_status'] = 'paid';
+        }
+
+        $order->update($updateData);
+        
+        // Cập nhật lại newStatus để hiển thị đúng thông báo
+        $newStatus = $finalStatus;
 
         $statusLabels = config('constants.order_status');
         $newLabel = $statusLabels[$newStatus]['label'] ?? $newStatus;

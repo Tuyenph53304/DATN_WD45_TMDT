@@ -106,78 +106,96 @@
                                 $maxPrice = $product->variants->max('price');
                             @endphp
                             <div class="col-lg-4 col-md-6">
-                                <div class="card product-card h-100">
+                                @if($defaultVariant)
+                                <a href="{{ route('products.show', $product->slug) }}" class="text-decoration-none">
+                                    <div class="card product-card h-100" style="transition: all 0.3s; cursor: pointer;">
                                     <div class="position-relative overflow-hidden" style="height: 240px;">
                                         <img src="{{ $defaultVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop' }}"
                                             class="card-img-top w-100 h-100" alt="{{ $product->name }}"
-                                            style="object-fit: cover;">
-                                        <div class="position-absolute top-0 start-0 m-3">
-                                            <span class="badge bg-success">Mới</span>
+                                                style="object-fit: cover; transition: transform 0.3s;">
+                                            @if($defaultVariant->hasDiscount())
+                                                <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                                    -{{ $defaultVariant->getDiscountPercent() }}%
+                                                </span>
+                                            @endif
                                         </div>
-                                    </div>
-                                    <div class="card-body d-flex flex-column">
-                                        <h6 class="card-title fw-bold">
-                                            <a href="{{ route('products.show', $product->slug) }}"
-                                                class="text-decoration-none text-dark">{{ $product->name }}</a>
-                                        </h6>
-                                        <p class="text-muted small mb-2">
-                                            @if ($defaultVariant && $defaultVariant->attributeValues->count() > 0)
-                                                @foreach ($defaultVariant->attributeValues->take(3) as $attrValue)
-                                                    {{ $attrValue->value }}@if (!$loop->last)
-                                                        ,
-                                                    @endif
+                                        <div class="card-body d-flex flex-column">
+                                            <!-- Tên sản phẩm -->
+                                            <h6 class="card-title fw-bold mb-2">{{ $product->name }}</h6>
+                                            
+                                            <!-- Mô tả -->
+                                            <p class="text-muted small mb-2" style="min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                                {{ Str::limit($product->description ?? 'Sản phẩm chất lượng cao', 80) }}
+                                            </p>
+
+                                            <!-- Rating -->
+                                            <div class="product-rating mb-2">
+                                                @php
+                                                    $avgRating = $product->average_rating ?? 0;
+                                                    $totalReviews = $product->total_reviews ?? 0;
+                                                @endphp
+                                                <div class="stars">
+                                                    @for($star = 1; $star <= 5; $star++)
+                                                        <i class="bi bi-star{{ $star <= round($avgRating) ? '-fill' : '' }}" style="color: {{ $star <= round($avgRating) ? '#ffc107' : '#ddd' }};"></i>
+                                                    @endfor
+                                                </div>
+                                                <span class="rating-text">({{ $totalReviews }})</span>
+                                            </div>
+
+                                            <!-- Price Section -->
+                                            <div class="price-container mb-3">
+                                                @php
+                                                    $oldPrice = $defaultVariant->old_price ?? 0;
+                                                    $hasDiscount = $defaultVariant->hasDiscount();
+                                                @endphp
+                                                @if($hasDiscount || $oldPrice > 0)
+                                                    <!-- Giá cũ (gạch ngang) -->
+                                                    <div class="mb-1">
+                                                        <span class="text-muted" style="text-decoration: line-through; font-size: 0.9rem;">
+                                                            {{ number_format($oldPrice > 0 ? $oldPrice : 0) }}₫
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                                <!-- Giá mới (đỏ) -->
+                                                <div class="mb-1">
+                                                    <span class="text-danger fw-bold" style="font-size: 1.2rem;">
+                                                        {{ number_format($defaultVariant->price) }}₫
+                                                    </span>
+                                                </div>
+                                                @if($hasDiscount)
+                                                    <!-- Phần trăm giảm -->
+                                                    <div class="mb-2">
+                                                        <span class="badge bg-danger">
+                                                            Giảm {{ $defaultVariant->getDiscountPercent() }}%
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                            </div>
+
+                                            <!-- Specs -->
+                                            @if($defaultVariant->attributeValues->count() > 0)
+                                            <div class="product-specs mb-3">
+                                                @foreach($defaultVariant->attributeValues->take(3) as $attrValue)
+                                                <div class="spec-item">
+                                                    <i class="bi bi-check-circle"></i>
+                                                    <span>{{ $attrValue->attribute->name ?? '' }}: {{ $attrValue->value }}</span>
+                                                </div>
                                                 @endforeach
-                                            @else
-                                                {{ Str::limit($product->description, 50) }}
+                                            </div>
                                             @endif
-                                        </p>
-
-                                        <!-- Price -->
-                                        <div class="price-container mb-3">
-                                            @if ($minPrice && $maxPrice && $minPrice != $maxPrice)
-                                                <span class="price-new">{{ number_format($minPrice) }}₫ -
-                                                    {{ number_format($maxPrice) }}₫</span>
-                                            @elseif($defaultVariant)
-                                                <span class="price-new">{{ number_format($defaultVariant->price) }}₫</span>
-                                            @endif
-                                        </div>
-
-                                        <!-- Stock Status -->
-                                        <div class="mb-3">
-                                            <span
-                                                class="stock-status {{ $defaultVariant && $defaultVariant->stock > 0 ? 'in-stock' : 'out-of-stock' }}">
-                                                <i
-                                                    class="bi bi-{{ $defaultVariant && $defaultVariant->stock > 0 ? 'check' : 'x' }}-circle-fill"></i>
-                                                {{ $defaultVariant && $defaultVariant->stock > 0 ? 'Còn hàng' : 'Hết hàng' }}
-                                            </span>
-                                        </div>
-
-                                        <!-- Actions -->
-                                        <div class="product-actions">
-                                            @if ($defaultVariant && $defaultVariant->stock > 0)
-                                                <button class="btn btn-primary btn-sm flex-grow-1 add-to-cart-btn"
-                                                    data-variant-id="{{ $defaultVariant->id }}">
-                                                    <i class="bi bi-cart-plus"></i> Thêm vào giỏ
-                                                </button>
-                                            @else
-                                                <button class="btn btn-secondary btn-sm flex-grow-1" disabled>
-                                                    <i class="bi bi-x-circle"></i> Hết hàng
-                                                </button>
-                                            @endif
-                                            <a href="{{ route('products.show', $product->slug) }}"
-                                                class="btn btn-outline-primary btn-sm">
-                                                <i class="bi bi-eye"></i> Xem
-                                            </a>
                                         </div>
                                     </div>
-                                </div>
+                                </a>
+                                @endif
                             </div>
                         @endforeach
                     </div>
 
                     <!-- Pagination -->
                     <div class="mt-4">
+                        @if($products instanceof \Illuminate\Pagination\LengthAwarePaginator && $products->hasPages())
                         {{ $products->links() }}
+                        @endif
                     </div>
                 @else
                     <div class="text-center py-5">
