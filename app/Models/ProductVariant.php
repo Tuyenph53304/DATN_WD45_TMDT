@@ -12,8 +12,14 @@ class ProductVariant extends Model
         'product_id',
         'sku',
         'price',
+        'old_price',
         'stock',
         'image',
+    ];
+
+    protected $casts = [
+        'price' => 'decimal:2',
+        'old_price' => 'decimal:2',
     ];
 
     /**
@@ -38,5 +44,35 @@ class ProductVariant extends Model
     public function cartItems(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(CartItem::class);
+    }
+
+    /**
+     * Kiểm tra xem có đang giảm giá không
+     */
+    public function hasDiscount(): bool
+    {
+        return $this->old_price && $this->old_price > $this->price;
+    }
+
+    /**
+     * Tính phần trăm giảm giá
+     */
+    public function getDiscountPercent(): float
+    {
+        if (!$this->hasDiscount()) {
+            return 0;
+        }
+        return round((($this->old_price - $this->price) / $this->old_price) * 100, 0);
+    }
+
+    /**
+     * Tính số tiền giảm
+     */
+    public function getDiscountAmount(): float
+    {
+        if (!$this->hasDiscount()) {
+            return 0;
+        }
+        return $this->old_price - $this->price;
     }
 }

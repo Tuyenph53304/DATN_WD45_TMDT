@@ -15,8 +15,13 @@
             </div>
           </div>
 
-          <h2 class="fw-bold text-success mb-3">Thanh toán thành công!</h2>
-          <p class="text-muted mb-4">Cảm ơn bạn đã mua sắm tại {{ config('constants.site.name') }}</p>
+          @if($order->payment_method === 'cod')
+            <h2 class="fw-bold text-success mb-3">Đặt hàng thành công!</h2>
+            <p class="text-muted mb-4">Cảm ơn bạn đã đặt hàng tại {{ config('constants.site.name') }}</p>
+          @else
+            <h2 class="fw-bold text-success mb-3">Thanh toán thành công!</h2>
+            <p class="text-muted mb-4">Cảm ơn bạn đã mua sắm tại {{ config('constants.site.name') }}</p>
+          @endif
 
           <!-- Payment Transaction Card -->
           <div class="card border-success mb-4" style="border-width: 2px;">
@@ -51,9 +56,19 @@
               <div class="row">
                 <div class="col-5 fw-semibold">Trạng thái:</div>
                 <div class="col-7">
-                  <span class="badge bg-success fs-6">
-                    <i class="bi bi-check-circle"></i> Đã thanh toán
-                  </span>
+                  @if($order->payment_status === 'paid')
+                    <span class="badge bg-success fs-6">
+                      <i class="bi bi-check-circle"></i> Đã thanh toán
+                    </span>
+                  @elseif($order->payment_status === 'unpaid')
+                    <span class="badge bg-warning fs-6">
+                      <i class="bi bi-hourglass-split"></i> Chưa thanh toán
+                    </span>
+                  @else
+                    <span class="badge bg-info fs-6">
+                      <i class="bi bi-clock"></i> {{ $order->payment_status }}
+                    </span>
+                  @endif
                 </div>
               </div>
             </div>
@@ -92,9 +107,15 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-4 fw-semibold">Trạng thái:</div>
+                <div class="col-4 fw-semibold">Trạng thái thanh toán:</div>
                 <div class="col-8">
-                  <span class="badge bg-success">Đã thanh toán</span>
+                  @if($order->payment_status === 'paid')
+                    <span class="badge bg-success">Đã thanh toán</span>
+                  @elseif($order->payment_status === 'unpaid')
+                    <span class="badge bg-warning">Chưa thanh toán</span>
+                  @else
+                    <span class="badge bg-info">{{ $order->payment_status }}</span>
+                  @endif
                 </div>
               </div>
             </div>

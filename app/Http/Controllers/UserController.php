@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Order;
+use App\Models\Review;
 use App\Models\ShippingAddress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,7 +22,7 @@ class UserController extends Controller
         // Lấy sản phẩm flash sale (có thể lấy sản phẩm có giá tốt nhất)
         $flashSaleProducts = Product::with(['variants' => function($query) {
                 $query->orderBy('price', 'asc');
-            }, 'variants.attributeValues.attribute', 'category'])
+            }, 'variants.attributeValues.attribute', 'category', 'approvedReviews'])
             ->where('status', true)
             ->has('variants')
             ->limit(4)
@@ -36,8 +37,44 @@ class UserController extends Controller
         // Lấy sản phẩm nổi bật
         $featuredProducts = Product::with(['variants' => function($query) {
                 $query->orderBy('price', 'asc');
-            }, 'variants.attributeValues.attribute', 'category'])
+            }, 'variants.attributeValues.attribute', 'category', 'approvedReviews'])
             ->where('status', true)
+            ->has('variants')
+            ->limit(4)
+            ->get()
+            ->map(function($product) {
+                $product->minPrice = $product->variants->min('price');
+                $product->maxPrice = $product->variants->max('price');
+                $product->defaultVariant = $product->variants->first();
+                return $product;
+            });
+
+        // Lấy sản phẩm Laptop Gaming
+        $gamingProducts = Product::with(['variants' => function($query) {
+                $query->orderBy('price', 'asc');
+            }, 'variants.attributeValues.attribute', 'category', 'approvedReviews'])
+            ->where('status', true)
+            ->whereHas('category', function($query) {
+                $query->where('slug', 'laptop-gaming');
+            })
+            ->has('variants')
+            ->limit(4)
+            ->get()
+            ->map(function($product) {
+                $product->minPrice = $product->variants->min('price');
+                $product->maxPrice = $product->variants->max('price');
+                $product->defaultVariant = $product->variants->first();
+                return $product;
+            });
+
+        // Lấy sản phẩm Laptop Văn Phòng
+        $officeProducts = Product::with(['variants' => function($query) {
+                $query->orderBy('price', 'asc');
+            }, 'variants.attributeValues.attribute', 'category', 'approvedReviews'])
+            ->where('status', true)
+            ->whereHas('category', function($query) {
+                $query->where('slug', 'laptop-van-phong');
+            })
             ->has('variants')
             ->limit(4)
             ->get()
@@ -57,7 +94,7 @@ class UserController extends Controller
             $cartCount = \App\Models\CartItem::where('user_id', Auth::id())->sum('quantity');
         }
 
-        return view('user.home', compact('flashSaleProducts', 'featuredProducts', 'categories', 'cartCount'));
+        return view('user.home', compact('flashSaleProducts', 'featuredProducts', 'gamingProducts', 'officeProducts', 'categories', 'cartCount'));
     }
 
     /**
@@ -152,12 +189,23 @@ class UserController extends Controller
     public function orderDetail($id)
     {
         $user = Auth::user();
-        $order = Order::with(['orderItems.productVariant.product', 'orderItems.productVariant.attributeValues', 'shippingAddress'])
+        $order = Order::with([
+            'orderItems.productVariant.product', 
+            'orderItems.productVariant.attributeValues', 
+            'shippingAddress'
+        ])
             ->where('id', $id)
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        return view('user.orders.show', compact('order'));
+        // Lấy đánh giá cho các sản phẩm trong đơn hàng
+        $reviews = Review::where('order_id', $order->id)
+            ->where('user_id', $user->id)
+            ->with('product')
+            ->get()
+            ->keyBy('product_id');
+
+        return view('user.orders.show', compact('order', 'reviews'));
     }
 
     /**
@@ -290,30 +338,87 @@ class UserController extends Controller
     }
 
     /**
-     * Khách hàng hủy đơn hàng (chỉ khi ở trạng thái "chờ xác nhận")
+     * Trang giới thiệu
      */
-    public function cancelOrder($id)
+    public function about()
+    {
+        return view('user.about');
+    }
+
+    /**
+     * Danh sách tin tức
+     */
+    public function news()
+    {
+        $newsList = \App\Models\News::where('status', true)
+            ->orderBy('created_at', 'desc')
+            ->paginate(12);
+
+        return view('user.news.index', compact('newsList'));
+    }
+
+    /**
+     * Chi tiết tin tức
+     */
+    public function newsDetail($slug)
+    {
+        $news = \App\Models\News::where('slug', $slug)
+            ->where('status', true)
+            ->firstOrFail();
+
+        // Tăng lượt xem
+        $news->incrementViews();
+
+        // Lấy tin tức liên quan
+        $relatedNews = \App\Models\News::where('status', true)
+            ->where('id', '!=', $news->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(4)
+            ->get();
+
+        return view('user.news.show', compact('news', 'relatedNews'));
+    }
+
+    /**
+     * Khách hàng hủy đơn hàng
+     * - Nếu đơn hàng ở trạng thái "chờ xác nhận": hủy trực tiếp
+     * - Nếu đơn hàng từ "đã xác nhận" trở đi: yêu cầu hủy, cần admin xác nhận
+     */
+    public function cancelOrder(Request $request, $id)
     {
         $user = Auth::user();
         $order = Order::where('id', $id)
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        // Chỉ cho phép hủy khi đơn hàng ở trạng thái "chờ xác nhận"
-        if (!$order->canCancelByCustomer()) {
+        // Validate lý do hủy
+        $request->validate([
+            'cancel_reason' => 'required|string|max:1000',
+        ]);
+
+        // Nếu đơn hàng ở trạng thái "chờ xác nhận": hủy trực tiếp
+        if ($order->status === 'pending_confirmation' && $order->canCancelByCustomer()) {
+            $order->status = 'cancelled';
+            $order->cancel_reason = $request->cancel_reason;
+            $order->cancelled_request = false;
+            $order->save();
+            
             return redirect()->route('user.orders.show', $order->id)
-                ->with('error', 'Bạn chỉ có thể hủy đơn hàng khi đơn hàng đang ở trạng thái "Chờ xác nhận"!');
+                ->with('success', 'Đơn hàng đã được hủy thành công!');
         }
 
-        // Đơn hàng sẽ chuyển sang trạng thái "chờ xác nhận hủy" - admin sẽ xác nhận
-        // Ở đây ta giữ nguyên trạng thái pending_confirmation và admin sẽ xác nhận hủy
-        // Hoặc có thể tạo một trường cancelled_request = true để admin biết khách muốn hủy
-        
-        // Tạm thời: đơn hàng vẫn ở pending_confirmation, admin sẽ xác nhận hủy
-        // Có thể thêm một trường cancelled_request vào bảng orders nếu cần
-        
+        // Nếu đơn hàng từ "đã xác nhận" trở đi: yêu cầu hủy
+        if ($order->canRequestCancel() && !$order->cancelled_request) {
+            $order->cancelled_request = true;
+            $order->cancel_reason = $request->cancel_reason;
+            $order->save();
+            
+            return redirect()->route('user.orders.show', $order->id)
+                ->with('success', 'Yêu cầu hủy đơn hàng đã được gửi. Vui lòng chờ admin xác nhận!');
+        }
+
         return redirect()->route('user.orders.show', $order->id)
-            ->with('success', 'Yêu cầu hủy đơn hàng đã được gửi. Vui lòng chờ admin xác nhận!');
+            ->with('error', 'Không thể hủy đơn hàng này!');
     }
 
     /**
@@ -333,10 +438,17 @@ class UserController extends Controller
         }
 
         // Chuyển trạng thái sang "thành công"
-        $order->update(['status' => 'completed']);
+        $updateData = ['status' => 'completed'];
+        
+        // Nếu là COD, cập nhật payment_status sang "paid" khi giao hàng thành công
+        if ($order->payment_method === 'cod' && $order->payment_status !== 'paid') {
+            $updateData['payment_status'] = 'paid';
+        }
+        
+        $order->update($updateData);
 
         return redirect()->route('user.orders.show', $order->id)
-            ->with('success', 'Cảm ơn bạn đã xác nhận nhận hàng!');
+            ->with('success', 'Cảm ơn bạn đã xác nhận nhận hàng! Bạn có thể đánh giá sản phẩm ngay bây giờ.');
     }
 
     /**

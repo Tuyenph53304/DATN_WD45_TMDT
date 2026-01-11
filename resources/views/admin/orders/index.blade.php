@@ -33,8 +33,9 @@
           <select name="payment_status" class="form-control">
             <option value="">Tất cả thanh toán</option>
             <option value="paid" {{ request('payment_status') === 'paid' ? 'selected' : '' }}>Đã thanh toán</option>
-            <option value="pending" {{ request('payment_status') === 'pending' ? 'selected' : '' }}>Chưa thanh toán</option>
-            <option value="failed" {{ request('payment_status') === 'failed' ? 'selected' : '' }}>Thất bại</option>
+            <option value="unpaid" {{ request('payment_status') === 'unpaid' ? 'selected' : '' }}>Chưa thanh toán</option>
+            <option value="pending" {{ request('payment_status') === 'pending' ? 'selected' : '' }}>Đang chờ thanh toán</option>
+            <option value="failed" {{ request('payment_status') === 'failed' ? 'selected' : '' }}>Thanh toán thất bại</option>
           </select>
         </div>
         <div class="col-md-2">
@@ -85,10 +86,14 @@
             <td>
               @if($order->payment_status === 'paid')
                 <span class="badge bg-success">Đã thanh toán</span>
-              @elseif($order->payment_status === 'pending')
+              @elseif($order->payment_status === 'unpaid')
                 <span class="badge bg-warning">Chưa thanh toán</span>
+              @elseif($order->payment_status === 'pending')
+                <span class="badge bg-info">Đang chờ thanh toán</span>
+              @elseif($order->payment_status === 'failed')
+                <span class="badge bg-danger">Thanh toán thất bại</span>
               @else
-                <span class="badge bg-danger">Thất bại</span>
+                <span class="badge bg-secondary">{{ $order->payment_status }}</span>
               @endif
             </td>
             <td>
@@ -111,9 +116,11 @@
     </div>
 
     <!-- Pagination -->
+    @if($orders instanceof \Illuminate\Pagination\LengthAwarePaginator && $orders->hasPages())
     <div class="mt-3">
       {{ $orders->links() }}
     </div>
+    @endif
     @else
     <div class="alert alert-info text-center">
       <i class="bi bi-info-circle me-2"></i> Không tìm thấy đơn hàng nào.

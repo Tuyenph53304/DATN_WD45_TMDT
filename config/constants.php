@@ -199,6 +199,7 @@ return [
             'can_transition_to' => ['shipping'],
             'is_final' => false,
             'can_cancel_by_customer' => false,
+            'can_request_cancel' => true, // Khách hàng có thể yêu cầu hủy (cần admin xác nhận)
         ],
         'shipping' => [
             'value' => 'shipping',
@@ -208,6 +209,7 @@ return [
             'can_transition_to' => ['delivered'],
             'is_final' => false,
             'can_cancel_by_customer' => false,
+            'can_request_cancel' => false, // Không thể yêu cầu hủy khi đang giao hàng
         ],
         'delivered' => [
             'value' => 'delivered',
@@ -217,6 +219,7 @@ return [
             'can_transition_to' => ['completed', 'delivery_failed'],
             'is_final' => false,
             'can_cancel_by_customer' => false,
+            'can_request_cancel' => false, // Không thể yêu cầu hủy khi đã giao hàng
             'can_confirm_by_customer' => true, // Khách hàng có thể xác nhận nhận hàng
             'can_return_by_customer' => true, // Khách hàng có thể hoàn hàng
         ],

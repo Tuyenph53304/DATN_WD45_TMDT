@@ -2,6 +2,32 @@
    LAPTOP STORE - PREMIUM STYLES
    ============================================ */
 
+/* Taskbar - Đảm bảo chữ trên một hàng */
+#navbarNav .navbar-nav {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+#navbarNav .navbar-nav .nav-item {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+#navbarNav .navbar-nav .nav-link {
+    white-space: nowrap;
+}
+
+/* User Dropdown - Fix z-index */
+.dropdown-menu {
+    z-index: 10000 !important;
+}
+
+.dropdown {
+    position: relative;
+}
+
 :root {
   --primary-color: #4F46E5;
   --primary-dark: #4338CA;
@@ -427,6 +453,8 @@ header {
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(10px);
+  z-index: 10;
+  cursor: pointer;
 }
 
 .carousel-control-prev:hover,
@@ -604,6 +632,21 @@ header {
   box-shadow: var(--shadow-xl);
   border-color: var(--primary-color);
 }
+
+/* Product Card khi nằm trong thẻ <a> */
+a .product-card {
+  text-decoration: none;
+  color: inherit;
+}
+
+a:hover .product-card {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--primary-color);
+}
+
+a:hover .product-card .card-img-top img {
+  transform: scale(1.1);
 
 .product-card .card-img-top {
   position: relative;

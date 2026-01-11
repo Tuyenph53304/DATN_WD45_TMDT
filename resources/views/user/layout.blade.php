@@ -161,7 +161,7 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0"
                                     aria-labelledby="userDropdown"
-                                    style="border-radius: var(--radius-lg); min-width: 220px; z-index: 9999;">
+                                    style="border-radius: var(--radius-lg); min-width: 220px; z-index: 10000; position: absolute;">
                                     <li><a class="dropdown-item py-2" href="{{ route('user.profile') }}"><i
                                                 class="bi bi-person me-2"></i> Thông tin tài khoản</a></li>
                                     <li><a class="dropdown-item py-2" href="{{ route('user.orders') }}"><i
@@ -213,84 +213,39 @@
                         <i class="bi bi-list me-2"></i> <span>Danh mục sản phẩm</span>
                     </button>
                     <div class="collapse navbar-collapse" id="navbarNav">
-                        <ul class="navbar-nav w-100 d-flex justify-content-between">
-                            <li class="nav-item">
+                        <ul class="navbar-nav w-100 d-flex justify-content-between flex-nowrap" style="overflow-x: auto; white-space: nowrap;">
+                            <li class="nav-item flex-shrink-0">
                                 <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }} px-3 py-2"
                                     href="{{ route('home') }}">
                                     <i class="bi bi-house-fill me-2"></i> Trang chủ
                                 </a>
                             </li>
-                            @foreach (config('constants.categories') as $key => $category)
-                                <li class="nav-item dropdown dropdown-mega">
-                                    <a class="nav-link dropdown-toggle px-3 py-2" href="#" role="button"
-                                        data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                        <i class="bi {{ $category['icon'] }} me-2"></i> {{ $category['name'] }}
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-mega-menu shadow-lg border-0 p-4"
-                                        style="border-radius: var(--radius-xl); min-width: 600px;">
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                <h6 class="fw-bold mb-3 text-primary">Danh mục phổ biến</h6>
-                                                <ul class="list-unstyled">
-                                                    @foreach ($category['subcategories'] as $sub)
-                                                        <li class="mb-2">
-                                                            <a href="#"
-                                                                class="text-decoration-none d-flex align-items-center p-2 rounded"
-                                                                style="transition: all 0.3s;">
-                                                                <i class="bi bi-chevron-right me-2 text-primary"></i>
-                                                                <span>{{ $sub }}</span>
+                            @foreach ($categories as $category)
+                                <li class="nav-item flex-shrink-0">
+                                    <a class="nav-link px-3 py-2 {{ request()->routeIs('products.index') && request('category') == $category->id ? 'active' : '' }}"
+                                        href="{{ route('products.index', ['category' => $category->id]) }}">
+                                        <i class="bi bi-tag me-2"></i> <span style="white-space: nowrap;">{{ $category->name }}</span>
                                                             </a>
-                                                        </li>
-                                                    @endforeach
-                                                </ul>
-                                            </div>
-                                            <div class="col-md-8">
-                                                <h6 class="fw-bold mb-3 text-primary">Sản phẩm nổi bật</h6>
-                                                <div class="row g-3">
-                                                    @for ($i = 1; $i <= 4; $i++)
-                                                        <div class="col-6">
-                                                            <a href="#" class="text-decoration-none">
-                                                                <div class="card border-0 shadow-sm h-100"
-                                                                    style="border-radius: var(--radius-lg); transition: all 0.3s;">
-                                                                    <img src="https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=200&h=150&fit=crop"
-                                                                        class="card-img-top" alt="Product"
-                                                                        style="height: 100px; object-fit: cover; border-radius: var(--radius-lg) var(--radius-lg) 0 0;">
-                                                                    <div class="card-body p-2">
-                                                                        <small class="text-muted d-block"
-                                                                            style="font-size: 0.75rem; line-height: 1.3;">Laptop
-                                                                            {{ $sub ?? 'Gaming' }}
-                                                                            {{ $i }}</small>
-                                                                        <strong class="text-danger"
-                                                                            style="font-size: 0.85rem;">{{ number_format(15000000 + $i * 1000000) }}₫</strong>
-                                                                    </div>
-                                                                </div>
-                                                            </a>
-                                                        </div>
-                                                    @endfor
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </ul>
                                 </li>
                             @endforeach
-                            <li class="nav-item">
-                                <a class="nav-link px-3 py-2" href="#">
-                                    <i class="bi bi-tag-fill me-2"></i> Khuyến mãi
+                            <li class="nav-item flex-shrink-0">
+                                <a class="nav-link px-3 py-2 {{ request()->routeIs('vouchers.index') ? 'active' : '' }}" href="{{ route('vouchers.index') }}">
+                                    <i class="bi bi-tag-fill me-2"></i> <span style="white-space: nowrap;">Khuyến mãi</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link px-3 py-2" href="#">
-                                    <i class="bi bi-newspaper me-2"></i> Tin tức
+                            <li class="nav-item flex-shrink-0">
+                                <a class="nav-link px-3 py-2 {{ request()->routeIs('news.index') ? 'active' : '' }}" href="{{ route('news.index') }}">
+                                    <i class="bi bi-newspaper me-2"></i> <span style="white-space: nowrap;">Tin tức</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link px-3 py-2" href="#">
-                                    <i class="bi bi-info-circle me-2"></i> Giới thiệu
+                            <li class="nav-item flex-shrink-0">
+                                <a class="nav-link px-3 py-2 {{ request()->routeIs('about') ? 'active' : '' }}" href="{{ route('about') }}">
+                                    <i class="bi bi-info-circle me-2"></i> <span style="white-space: nowrap;">Giới thiệu</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
+                            <li class="nav-item flex-shrink-0">
                                 <a class="nav-link px-3 py-2" href="#">
-                                    <i class="bi bi-telephone me-2"></i> Liên hệ
+                                    <i class="bi bi-telephone me-2"></i> <span style="white-space: nowrap;">Liên hệ</span>
                                 </a>
                             </li>
                         </ul>
@@ -650,23 +605,34 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var dropdownToggle = document.getElementById('userDropdown');
-            var dropdownMenu = dropdownToggle?.nextElementSibling;
 
-            if (dropdownToggle && dropdownMenu) {
-                // Ensure dropdown is hidden initially
-                dropdownMenu.style.display = 'none';
-
+            if (dropdownToggle) {
                 // Try Bootstrap first
                 if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
                     try {
-                        var dropdown = new bootstrap.Dropdown(dropdownToggle);
+                        var dropdown = new bootstrap.Dropdown(dropdownToggle, {
+                            boundary: 'viewport',
+                            popperConfig: {
+                                modifiers: [{
+                                    name: 'preventOverflow',
+                                    options: {
+                                        boundary: document.body
+                                    }
+                                }]
+                            }
+                        });
                         return;
                     } catch (e) {
-                        console.log('Bootstrap dropdown failed, using fallback');
+                        console.log('Bootstrap dropdown failed, using fallback', e);
                     }
                 }
 
                 // Fallback: Manual dropdown toggle
+                var dropdownMenu = dropdownToggle.nextElementSibling;
+                if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
+                    // Ensure dropdown is hidden initially
+                    dropdownMenu.style.display = 'none';
+
                 dropdownToggle.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -683,6 +649,8 @@
                         dropdownMenu.style.display = 'none';
                     } else {
                         dropdownMenu.style.display = 'block';
+                            dropdownMenu.style.position = 'absolute';
+                            dropdownMenu.style.zIndex = '10000';
                     }
                 });
 
@@ -694,6 +662,7 @@
                         }
                     }
                 });
+                }
             }
         });
 

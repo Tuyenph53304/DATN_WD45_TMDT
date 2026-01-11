@@ -17,6 +17,14 @@
               @foreach($cartItems as $item)
               <div class="cart-item border-bottom pb-4 mb-4" data-item-id="{{ $item->id }}">
                 <div class="row align-items-center">
+                  <!-- Checkbox -->
+                  <div class="col-md-1 mb-3 mb-md-0 text-center">
+                    <input type="checkbox" class="form-check-input cart-item-checkbox"
+                           data-item-id="{{ $item->id }}"
+                           data-price="{{ $item->productVariant->price }}"
+                           data-quantity="{{ $item->quantity }}"
+                           checked>
+                  </div>
                   <!-- Product Image -->
                   <div class="col-md-2 mb-3 mb-md-0">
                     <img src="{{ $item->productVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=200&h=200&fit=crop' }}"
@@ -81,41 +89,18 @@
               <h5 class="mb-0"><i class="bi bi-receipt"></i> Tóm tắt đơn hàng</h5>
             </div>
             <div class="card-body">
-              <!-- Voucher Section -->
-              <div class="mb-4">
-                @if($voucher)
-                <div class="alert alert-success p-2 mb-2">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                      <small class="fw-bold">{{ $voucher->code }}</small>
-                      @if($voucher->type === 'percentage')
-                        <div class="small">Giảm {{ $voucher->value }}%</div>
-                      @else
-                        <div class="small">Giảm {{ number_format($voucher->value) }}₫</div>
-                      @endif
-                    </div>
-                    <form action="{{ route('voucher.remove') }}" method="POST" class="d-inline">
-                      @csrf
-                      <button type="submit" class="btn btn-sm btn-outline-danger">
-                        <i class="bi bi-x"></i>
-                      </button>
-                    </form>
-                  </div>
-                </div>
-                @else
-                <div class="input-group mb-2">
-                  <input type="text" class="form-control" id="voucher-code-input" placeholder="Nhập mã giảm giá">
-                  <button class="btn btn-outline-primary" type="button" id="apply-voucher-btn">
-                    <i class="bi bi-ticket-perforated"></i> Áp dụng
-                  </button>
-                </div>
-                <div id="voucher-message" class="small"></div>
-                @endif
-              </div>
 
               <div class="d-flex justify-content-between mb-3">
                 <span>Tạm tính:</span>
                 <span id="subtotal">{{ number_format($total) }}₫</span>
+              </div>
+              <div class="d-flex justify-content-between mb-3">
+                <span>Đã chọn:</span>
+                <span id="selected-total">{{ number_format($total) }}₫</span>
+              </div>
+              <div class="mb-3 small text-muted" id="selected-items-info" style="display: none;">
+                <div class="fw-bold mb-1">Sản phẩm sẽ thanh toán:</div>
+                <div id="selected-items-list"></div>
               </div>
               @if($voucher && $discount > 0)
               <div class="d-flex justify-content-between mb-3">
@@ -133,67 +118,23 @@
                 <strong class="text-danger fs-5" id="grand-total">{{ number_format($finalTotal ?? $total) }}₫</strong>
               </div>
 
-              <!-- Checkout Form -->
-              <form action="{{ route('payment.checkout') }}" method="POST" id="checkout-form">
-                @csrf
-
-                <!-- Shipping Address -->
+              <!-- Checkout Button -->
+              <form action="{{ route('checkout') }}" method="GET" id="checkout-form-with-selection">
+                <input type="hidden" name="selected_items" id="selected-items-input" value="">
                 @php
                   $shippingAddresses = \App\Models\ShippingAddress::where('user_id', Auth::id())->get();
                 @endphp
-                @if($shippingAddresses->count() > 0)
-                <div class="mb-4">
-                  <h6 class="fw-bold mb-3">Địa chỉ giao hàng:</h6>
-                  @php
-                    $hasDefault = $shippingAddresses->where('default', true)->first();
-                    $firstAddress = $shippingAddresses->first();
-                  @endphp
-                  @foreach($shippingAddresses as $index => $address)
-                  <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="shipping_address_id" id="address-{{ $address->id }}" value="{{ $address->id }}" {{ ($address->default || (!$hasDefault && $index === 0)) ? 'checked' : '' }} required>
-                    <label class="form-check-label" for="address-{{ $address->id }}">
-                      <div class="fw-semibold">
-                        {{ $address->full_name }}
-                        @if($address->default)
-                          <span class="badge bg-primary ms-2">Mặc định</span>
-                        @endif
-                      </div>
-                      <div class="small text-muted">{{ $address->address }}, {{ $address->city }}</div>
-                      <div class="small text-muted">{{ $address->phone }}</div>
-                    </label>
-                  </div>
-                  @endforeach
-                  <div id="address-error" class="text-danger small mt-2" style="display: none;">
-                    <i class="bi bi-exclamation-circle"></i> Vui lòng chọn địa chỉ giao hàng
-                  </div>
-                </div>
-                @else
-                <div class="alert alert-warning mb-4">
-                  <i class="bi bi-exclamation-triangle"></i> Bạn chưa có địa chỉ giao hàng.
-                  <a href="#" class="alert-link">Thêm địa chỉ mới</a>
+                <button type="submit" class="btn btn-danger w-100 btn-lg mb-2" id="checkout-btn" {{ $shippingAddresses->count() == 0 ? 'disabled' : '' }}>
+                  <i class="bi bi-arrow-right"></i>
+                  <span id="checkout-text">
+                    Thanh toán: <span id="checkout-amount">{{ number_format($total) }}</span>₫
+                  </span>
+                </button>
+                @if($shippingAddresses->count() == 0)
+                <div class="alert alert-warning small mt-2 mb-0">
+                  <i class="bi bi-exclamation-triangle"></i> Vui lòng thêm địa chỉ giao hàng trước khi thanh toán.
                 </div>
                 @endif
-
-                <!-- Payment Method Selection -->
-                <div class="mb-4">
-                  <h6 class="fw-bold mb-3">Phương thức thanh toán:</h6>
-                  <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="payment_method" id="payment-momo" value="momo" checked>
-                    <label class="form-check-label" for="payment-momo">
-                      <i class="bi bi-phone"></i> Thanh toán qua MoMo
-                    </label>
-                  </div>
-                  <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="payment_method" id="payment-cod" value="cod">
-                    <label class="form-check-label" for="payment-cod">
-                      <i class="bi bi-cash-coin"></i> Thanh toán khi nhận hàng (COD)
-                    </label>
-                  </div>
-                </div>
-
-                <button type="submit" class="btn btn-danger w-100 btn-lg mb-2" id="checkout-btn" {{ $shippingAddresses->count() == 0 ? 'disabled' : '' }}>
-                  <i class="bi bi-credit-card" id="payment-icon"></i> <span id="payment-text">Thanh toán MoMo</span>
-                </button>
               </form>
               <a href="{{ route('products.index') }}" class="btn btn-outline-primary w-100">
                 <i class="bi bi-arrow-left"></i> Tiếp tục mua sắm
@@ -220,28 +161,9 @@
 
 @push('scripts')
 <script>
-  // Payment method change handler
+  // Initialize selected total on page load
   document.addEventListener('DOMContentLoaded', function() {
-    const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
-    const paymentIcon = document.getElementById('payment-icon');
-    const paymentText = document.getElementById('payment-text');
-    const checkoutBtn = document.getElementById('checkout-btn');
-
-    paymentMethods.forEach(method => {
-      method.addEventListener('change', function() {
-        if (this.value === 'cod') {
-          paymentIcon.className = 'bi bi-cash-coin';
-          paymentText.textContent = 'Đặt hàng (Thanh toán khi nhận)';
-          checkoutBtn.classList.remove('btn-danger');
-          checkoutBtn.classList.add('btn-success');
-        } else {
-          paymentIcon.className = 'bi bi-credit-card';
-          paymentText.textContent = 'Thanh toán MoMo';
-          checkoutBtn.classList.remove('btn-success');
-          checkoutBtn.classList.add('btn-danger');
-        }
-      });
-    });
+    updateSelectedTotal();
   });
 
   // Update quantity
@@ -267,6 +189,11 @@
     .then(data => {
       if (data.success) {
         input.value = quantity;
+        // Update checkbox data-quantity
+        const checkbox = document.querySelector(`.cart-item-checkbox[data-item-id="${itemId}"]`);
+        if (checkbox) {
+          checkbox.setAttribute('data-quantity', quantity);
+        }
         updateItemTotal(itemId);
         updateCartTotal();
       } else {
@@ -296,6 +223,9 @@
     });
     document.getElementById('subtotal').textContent = new Intl.NumberFormat('vi-VN').format(subtotal) + '₫';
 
+    // Update selected total
+    updateSelectedTotal();
+
     // Check if voucher is applied
     const voucherApplied = document.querySelector('.alert-success');
     if (voucherApplied) {
@@ -306,72 +236,211 @@
     }
   }
 
-  // Apply voucher
-  document.getElementById('apply-voucher-btn')?.addEventListener('click', function() {
-    const code = document.getElementById('voucher-code-input').value.trim();
-    const messageDiv = document.getElementById('voucher-message');
-    const btn = this;
+  // Update selected total based on checkboxes
+  function updateSelectedTotal() {
+    let selectedTotal = 0;
+    const selectedItems = [];
 
-    if (!code) {
-      messageDiv.innerHTML = '<span class="text-danger">Vui lòng nhập mã voucher</span>';
-      return;
+    const checkedBoxes = document.querySelectorAll('.cart-item-checkbox:checked');
+
+    checkedBoxes.forEach(checkbox => {
+      const itemId = checkbox.getAttribute('data-item-id');
+      const price = parseFloat(checkbox.getAttribute('data-price')) || 0;
+      const quantity = parseInt(checkbox.getAttribute('data-quantity')) || 0;
+
+      if (itemId && itemId.trim() !== '') {
+        selectedTotal += price * quantity;
+        selectedItems.push(itemId.trim());
+      }
+    });
+
+    const selectedItemsString = selectedItems.join(',');
+
+    // Update UI
+    const selectedTotalEl = document.getElementById('selected-total');
+    if (selectedTotalEl) {
+      selectedTotalEl.textContent = new Intl.NumberFormat('vi-VN').format(selectedTotal) + '₫';
     }
 
-    btn.disabled = true;
-    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang kiểm tra...';
-    messageDiv.innerHTML = '';
+    // Update hidden input
+    const selectedItemsInput = document.getElementById('selected-items-input');
+    if (selectedItemsInput) {
+      selectedItemsInput.value = selectedItemsString;
+      // Debug logging
+      console.log('updateSelectedTotal - checked boxes:', checkedBoxes.length);
+      console.log('updateSelectedTotal - selected items:', selectedItemsString);
+      console.log('updateSelectedTotal - input value:', selectedItemsInput.value);
+    }
 
-    fetch('{{ route("api.voucher.validate") }}', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-      },
-      body: JSON.stringify({ code: code })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        // Apply voucher via form submit
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{{ route("voucher.apply") }}';
-
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = '_token';
-        csrfInput.value = '{{ csrf_token() }}';
-
-        const codeInput = document.createElement('input');
-        codeInput.type = 'hidden';
-        codeInput.name = 'code';
-        codeInput.value = code;
-
-        form.appendChild(csrfInput);
-        form.appendChild(codeInput);
-        document.body.appendChild(form);
-        form.submit();
+    // Update selected items info display
+    const selectedItemsInfo = document.getElementById('selected-items-info');
+    const selectedItemsList = document.getElementById('selected-items-list');
+    if (selectedItemsInfo && selectedItemsList) {
+      if (selectedItems.length > 0) {
+        // Get product names for display
+        const itemsList = [];
+        checkedBoxes.forEach(checkbox => {
+          const itemId = checkbox.getAttribute('data-item-id');
+          const cartItem = checkbox.closest('.cart-item');
+          if (cartItem) {
+            const nameElement = cartItem.querySelector('h6 a');
+            if (nameElement) {
+              const productName = nameElement.textContent.trim();
+              const quantity = checkbox.getAttribute('data-quantity');
+              itemsList.push(`• ${productName} (x${quantity})`);
+            }
+          }
+        });
+        selectedItemsList.innerHTML = itemsList.join('<br>');
+        selectedItemsInfo.style.display = 'block';
       } else {
-        messageDiv.innerHTML = '<span class="text-danger">' + data.message + '</span>';
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-ticket-perforated"></i> Áp dụng';
+        selectedItemsInfo.style.display = 'none';
       }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      messageDiv.innerHTML = '<span class="text-danger">Có lỗi xảy ra. Vui lòng thử lại.</span>';
-      btn.disabled = false;
-      btn.innerHTML = '<i class="bi bi-ticket-perforated"></i> Áp dụng';
+    }
+
+    // Update checkout amount
+    const checkoutAmount = document.getElementById('checkout-amount');
+    if (checkoutAmount) {
+      checkoutAmount.textContent = new Intl.NumberFormat('vi-VN').format(selectedTotal);
+    }
+
+    // Enable/disable checkout button (only based on selected items)
+    // Note: Button may also be disabled due to no shipping addresses (handled by PHP)
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (checkoutBtn) {
+      // Only disable if no items selected, but don't enable if disabled due to no addresses
+      if (selectedItems.length === 0) {
+        checkoutBtn.disabled = true;
+      } else {
+        // Check if there's a warning about no addresses
+        const addressWarning = document.querySelector('.alert-warning');
+        if (!addressWarning) {
+          // Only enable if no address warning (meaning addresses exist)
+          checkoutBtn.disabled = false;
+        }
+      }
+    }
+
+    return selectedItemsString;
+  }
+
+  // Handle checkbox change
+  document.querySelectorAll('.cart-item-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      updateSelectedTotal();
+    });
+
+    // Also update on click to ensure it's captured
+    checkbox.addEventListener('click', function() {
+      setTimeout(() => {
+        updateSelectedTotal();
+      }, 10);
     });
   });
 
-  // Allow Enter key to apply voucher
-  document.getElementById('voucher-code-input')?.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
+  // Helper function to get all checked items with details
+  function getCheckedItems() {
+    const allBoxes = document.querySelectorAll('.cart-item-checkbox');
+    const checkedItems = [];
+
+    allBoxes.forEach(checkbox => {
+      if (checkbox.checked === true) {
+        const itemId = checkbox.getAttribute('data-item-id');
+        const price = checkbox.getAttribute('data-price');
+        const quantity = checkbox.getAttribute('data-quantity');
+
+        // Find the cart item element to get product name
+        const cartItem = checkbox.closest('.cart-item');
+        let productName = 'Unknown';
+        if (cartItem) {
+          const nameElement = cartItem.querySelector('h6 a');
+          if (nameElement) {
+            productName = nameElement.textContent.trim();
+          }
+        }
+
+        if (itemId && itemId.trim() !== '') {
+          checkedItems.push({
+            id: itemId.trim(),
+            price: price,
+            quantity: quantity,
+            name: productName
+          });
+        }
+      }
+    });
+
+    return checkedItems;
+  }
+
+  // Ensure selected_items is updated before form submit
+  const checkoutForm = document.getElementById('checkout-form-with-selection');
+  if (checkoutForm) {
+    checkoutForm.addEventListener('submit', function(e) {
+      // Prevent default to ensure we update value first
       e.preventDefault();
-      document.getElementById('apply-voucher-btn')?.click();
-    }
-  });
+
+      console.log('=== FORM SUBMIT START ===');
+
+      // Get ALL checkboxes first
+      const allBoxes = document.querySelectorAll('.cart-item-checkbox');
+      console.log('Total checkboxes found:', allBoxes.length);
+
+      // Get checked checkboxes - use multiple methods to be absolutely sure
+      const checkedBoxes1 = document.querySelectorAll('.cart-item-checkbox:checked');
+      const checkedBoxes2 = Array.from(allBoxes).filter(cb => cb.checked === true);
+      const checkedBoxes = checkedBoxes1.length > 0 ? checkedBoxes1 : checkedBoxes2;
+
+      console.log('Checked boxes (method 1):', checkedBoxes1.length);
+      console.log('Checked boxes (method 2):', checkedBoxes2.length);
+      console.log('Using checked boxes:', checkedBoxes.length);
+
+      // Build selected items array directly from checked boxes
+      const selectedItems = [];
+      checkedBoxes.forEach((checkbox, index) => {
+        const itemId = checkbox.getAttribute('data-item-id');
+        const isChecked = checkbox.checked;
+        console.log(`Checkbox ${index}: id="${itemId}", checked=${isChecked}, type=${checkbox.type}`);
+        
+        if (itemId && itemId.trim() !== '' && isChecked) {
+          selectedItems.push(itemId.trim());
+        }
+      });
+
+      console.log('Selected items array:', selectedItems);
+      console.log('Selected items count:', selectedItems.length);
+
+      // Update the hidden input with selected items
+      const selectedItemsInput = document.getElementById('selected-items-input');
+      if (selectedItemsInput) {
+        const itemsString = selectedItems.join(',');
+        selectedItemsInput.value = itemsString;
+        console.log('✓ Hidden input value set to:', selectedItemsInput.value);
+        console.log('✓ Input element exists:', !!selectedItemsInput);
+        console.log('✓ Input name attribute:', selectedItemsInput.name);
+      } else {
+        console.error('✗ ERROR: selected-items-input element not found!');
+        alert('Lỗi: Không tìm thấy form input. Vui lòng tải lại trang.');
+        return false;
+      }
+
+      // Also update total display
+      updateSelectedTotal();
+
+      // Log final state
+      console.log('=== FINAL STATE BEFORE SUBMIT ===');
+      console.log('Form action:', this.action);
+      console.log('Form method:', this.method);
+      console.log('Selected items to send:', selectedItemsInput.value);
+      console.log('Form will submit to:', this.action + '?selected_items=' + encodeURIComponent(selectedItemsInput.value));
+
+      // Submit the form
+      this.submit();
+    });
+  } else {
+    console.error('ERROR: checkout-form-with-selection form not found!');
+  }
+
 
   // Quantity decrease
   document.querySelectorAll('.quantity-decrease').forEach(btn => {
@@ -393,16 +462,16 @@
     });
   });
 
-  // Remove item
+  // Remove item - Xóa trực tiếp không cần xác nhận
   document.querySelectorAll('.remove-item-btn').forEach(btn => {
     btn.addEventListener('click', function() {
-      if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')) {
-        return;
-      }
-
       const itemId = this.getAttribute('data-item-id');
       const btn = this;
+      const cartItem = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+
+      // Disable button và hiển thị loading
       btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xóa...';
 
       fetch(`/api/cart/${itemId}`, {
         method: 'DELETE',
@@ -414,77 +483,42 @@
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          document.querySelector(`.cart-item[data-item-id="${itemId}"]`).remove();
-          updateCartTotal();
+          // Xóa item khỏi DOM với animation
+          if (cartItem) {
+            cartItem.style.transition = 'opacity 0.3s, transform 0.3s';
+            cartItem.style.opacity = '0';
+            cartItem.style.transform = 'translateX(-20px)';
+            setTimeout(() => {
+              cartItem.remove();
+              updateCartTotal();
 
-          // Reload if cart is empty
-          if (document.querySelectorAll('.cart-item').length === 0) {
-            location.reload();
+              // Reload if cart is empty
+              if (document.querySelectorAll('.cart-item').length === 0) {
+                location.reload();
+              }
+            }, 300);
+          }
+
+          // Update cart count in header if exists
+          const cartBadge = document.querySelector('.cart-count-badge');
+          if (cartBadge) {
+            cartBadge.textContent = data.cart_count || 0;
           }
         } else {
           alert(data.message || 'Có lỗi xảy ra');
           btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-trash"></i> Xóa';
         }
       })
       .catch(error => {
         console.error('Error:', error);
         alert('Có lỗi xảy ra. Vui lòng thử lại.');
         btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-trash"></i> Xóa';
       });
     });
   });
 
-  // Validate shipping address before checkout
-  document.getElementById('checkout-form')?.addEventListener('submit', function(e) {
-    const selectedAddress = document.querySelector('input[name="shipping_address_id"]:checked');
-    const errorDiv = document.getElementById('address-error');
-
-    if (!selectedAddress) {
-      e.preventDefault();
-      if (errorDiv) {
-        errorDiv.style.display = 'block';
-      }
-
-      // Scroll to error
-      if (errorDiv) {
-        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-
-      // Highlight address section
-      const addressSection = document.querySelector('.mb-4:has(input[name="shipping_address_id"])');
-      if (addressSection) {
-        addressSection.style.border = '2px solid #dc3545';
-        addressSection.style.borderRadius = '8px';
-        addressSection.style.padding = '10px';
-        setTimeout(() => {
-          addressSection.style.border = '';
-          addressSection.style.padding = '';
-        }, 3000);
-      }
-
-      return false;
-    } else {
-      if (errorDiv) {
-        errorDiv.style.display = 'none';
-      }
-    }
-  });
-
-  // Hide error when address is selected
-  document.querySelectorAll('input[name="shipping_address_id"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-      const errorDiv = document.getElementById('address-error');
-      if (errorDiv) {
-        errorDiv.style.display = 'none';
-      }
-
-      // Enable checkout button
-      const checkoutBtn = document.getElementById('checkout-btn');
-      if (checkoutBtn) {
-        checkoutBtn.disabled = false;
-      }
-    });
-  });
 </script>
 @endpush
 @endsection

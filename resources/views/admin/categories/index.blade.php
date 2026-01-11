@@ -87,9 +87,11 @@
     </div>
 
     <!-- Pagination -->
+    @if($categories instanceof \Illuminate\Pagination\LengthAwarePaginator && $categories->hasPages())
     <div class="mt-3">
       {{ $categories->links() }}
     </div>
+    @endif
     @else
     <div class="alert alert-info text-center">
       <i class="bi bi-info-circle me-2"></i> Không tìm thấy danh mục nào.

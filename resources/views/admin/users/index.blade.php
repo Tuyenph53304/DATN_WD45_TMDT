@@ -105,9 +105,11 @@
     </div>
 
     <!-- Pagination -->
+    @if($users instanceof \Illuminate\Pagination\LengthAwarePaginator && $users->hasPages())
     <div class="mt-3">
       {{ $users->links() }}
     </div>
+    @endif
     @else
     <div class="alert alert-info text-center">
       <i class="bi bi-info-circle me-2"></i> Không tìm thấy user nào.

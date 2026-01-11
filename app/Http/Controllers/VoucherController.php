@@ -9,6 +9,20 @@ use Illuminate\Support\Facades\Auth;
 class VoucherController extends Controller
 {
     /**
+     * Hiển thị danh sách khuyến mãi
+     */
+    public function index()
+    {
+        $vouchers = Voucher::where('status', true)
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->orderBy('created_at', 'desc')
+            ->paginate(12);
+
+        return view('user.vouchers.index', compact('vouchers'));
+    }
+
+    /**
      * Validate và áp dụng voucher
      */
     public function validate(Request $request)

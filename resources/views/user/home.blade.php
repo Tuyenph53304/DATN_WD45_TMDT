@@ -196,70 +196,87 @@
     <div class="row g-4">
       @forelse($flashSaleProducts as $product)
       <div class="col-lg-3 col-md-4 col-sm-6">
-        <div class="card product-card h-100 position-relative">
           @if($product->defaultVariant)
-          <span class="flash-sale-badge discount-badge position-absolute top-0 end-0 m-3">HOT</span>
-          <div class="position-relative overflow-hidden" style="height: 220px;">
-            <img src="{{ $product->defaultVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop' }}" class="card-img-top w-100 h-100" alt="{{ $product->name }}" style="object-fit: cover;">
-            <div class="position-absolute top-0 start-0 m-2">
-              <span class="badge bg-danger">HOT</span>
+        <a href="{{ route('products.show', $product->slug) }}" class="text-decoration-none">
+          <div class="card product-card h-100 position-relative" style="transition: all 0.3s; cursor: pointer;">
+          <div class="position-relative overflow-hidden" style="height: 240px;">
+              <img src="{{ $product->defaultVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop' }}" 
+                   class="card-img-top w-100 h-100" alt="{{ $product->name }}" 
+                   style="object-fit: cover; transition: transform 0.3s;">
+              @if($product->defaultVariant->hasDiscount())
+                <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                  -{{ $product->defaultVariant->getDiscountPercent() }}%
+                </span>
+              @endif
             </div>
-          </div>
-          <div class="card-body d-flex flex-column">
-            <h6 class="card-title fw-bold">
-              <a href="{{ route('products.show', $product->slug) }}" class="text-decoration-none text-dark">{{ $product->name }}</a>
-            </h6>
-            <p class="text-muted small mb-2">
-              @if($product->defaultVariant && $product->defaultVariant->attributeValues->count() > 0)
+            <div class="card-body d-flex flex-column">
+              <!-- Tên sản phẩm -->
+              <h6 class="card-title fw-bold mb-2">{{ $product->name }}</h6>
+              
+              <!-- Mô tả -->
+              <p class="text-muted small mb-2" style="min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                {{ Str::limit($product->description ?? 'Sản phẩm chất lượng cao', 80) }}
+              </p>
+
+              <!-- Rating -->
+              <div class="product-rating mb-2">
+                @php
+                  $avgRating = $product->average_rating ?? 0;
+                  $totalReviews = $product->total_reviews ?? 0;
+                @endphp
+                <div class="stars">
+                  @for($star = 1; $star <= 5; $star++)
+                    <i class="bi bi-star{{ $star <= round($avgRating) ? '-fill' : '' }}" style="color: {{ $star <= round($avgRating) ? '#ffc107' : '#ddd' }};"></i>
+                  @endfor
+                </div>
+                <span class="rating-text">({{ $totalReviews }})</span>
+              </div>
+
+              <!-- Price Section -->
+              <div class="price-container mb-3">
+                @php
+                  $oldPrice = $product->defaultVariant->old_price ?? 0;
+                  $hasDiscount = $product->defaultVariant->hasDiscount();
+                @endphp
+                @if($hasDiscount || $oldPrice > 0)
+                  <!-- Giá cũ (gạch ngang) -->
+                  <div class="mb-1">
+                    <span class="text-muted" style="text-decoration: line-through; font-size: 0.9rem;">
+                      {{ number_format($oldPrice > 0 ? $oldPrice : 0) }}₫
+                    </span>
+                  </div>
+                @endif
+                <!-- Giá mới (đỏ) -->
+                <div class="mb-1">
+                  <span class="text-danger fw-bold" style="font-size: 1.2rem;">
+                    {{ number_format($product->defaultVariant->price) }}₫
+                  </span>
+                </div>
+                @if($hasDiscount)
+                  <!-- Phần trăm giảm -->
+                  <div class="mb-2">
+                    <span class="badge bg-danger">
+                      Giảm {{ $product->defaultVariant->getDiscountPercent() }}%
+                    </span>
+                  </div>
+                @endif
+              </div>
+
+              <!-- Specs -->
+              @if($product->defaultVariant->attributeValues->count() > 0)
+              <div class="product-specs mb-3">
                 @foreach($product->defaultVariant->attributeValues->take(3) as $attrValue)
-                  {{ $attrValue->value }}@if(!$loop->last), @endif
+                <div class="spec-item">
+                  <i class="bi bi-check-circle"></i>
+                  <span>{{ $attrValue->attribute->name ?? '' }}: {{ $attrValue->value }}</span>
+                </div>
                 @endforeach
-              @else
-                {{ $product->description ? Str::limit($product->description, 50) : 'Xem chi tiết' }}
+              </div>
               @endif
-            </p>
-
-            <!-- Price -->
-            <div class="price-container mb-3">
-              @if($product->minPrice && $product->maxPrice && $product->minPrice != $product->maxPrice)
-                <span class="price-new">{{ number_format($product->minPrice) }}₫ - {{ number_format($product->maxPrice) }}₫</span>
-              @elseif($product->defaultVariant)
-                <span class="price-new">{{ number_format($product->defaultVariant->price) }}₫</span>
-              @endif
-            </div>
-
-            <!-- Features -->
-            <div class="product-features mb-3">
-              <span class="feature-badge"><i class="bi bi-check-circle"></i> Bảo hành 24T</span>
-              <span class="feature-badge"><i class="bi bi-truck"></i> Freeship</span>
-            </div>
-
-            <!-- Stock Status -->
-            <div class="mb-3">
-              <span class="stock-status {{ $product->defaultVariant && $product->defaultVariant->stock > 0 ? 'in-stock' : 'out-of-stock' }}">
-                <i class="bi bi-{{ $product->defaultVariant && $product->defaultVariant->stock > 0 ? 'check' : 'x' }}-circle-fill"></i>
-                {{ $product->defaultVariant && $product->defaultVariant->stock > 0 ? 'Còn hàng' : 'Hết hàng' }}
-              </span>
-            </div>
-
-            <!-- Actions -->
-            <div class="product-actions">
-              @if($product->defaultVariant && $product->defaultVariant->stock > 0)
-              <button class="btn btn-danger btn-sm flex-grow-1 add-to-cart-btn" data-variant-id="{{ $product->defaultVariant->id }}">
-                <i class="bi bi-cart-plus"></i> Thêm vào giỏ
-              </button>
-              @else
-              <button class="btn btn-secondary btn-sm flex-grow-1" disabled>
-                <i class="bi bi-x-circle"></i> Hết hàng
-              </button>
-              @endif
-              <a href="{{ route('products.show', $product->slug) }}" class="btn btn-outline-danger btn-sm">
-                <i class="bi bi-eye"></i>
-              </a>
             </div>
           </div>
+        </a>
           @endif
-        </div>
       </div>
       @empty
       <div class="col-12">
@@ -313,77 +330,87 @@
   <div class="row g-4">
     @forelse($featuredProducts as $product)
     <div class="col-lg-3 col-md-4 col-sm-6">
-      <div class="card product-card h-100">
+      @if($product->defaultVariant)
+      <a href="{{ route('products.show', $product->slug) }}" class="text-decoration-none">
+        <div class="card product-card h-100" style="transition: all 0.3s; cursor: pointer;">
         <div class="position-relative overflow-hidden" style="height: 240px;">
-          <img src="{{ $product->defaultVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop' }}" class="card-img-top w-100 h-100" alt="{{ $product->name }}" style="object-fit: cover;">
-          <div class="position-absolute top-0 start-0 m-3">
-            <span class="badge bg-success">Mới</span>
-          </div>
-          <div class="position-absolute top-0 end-0 m-3">
-            <button class="btn btn-sm btn-light rounded-circle p-2">
-              <i class="bi bi-heart"></i>
-            </button>
-          </div>
-        </div>
-        <div class="card-body d-flex flex-column">
-          <h6 class="card-title fw-bold">
-            <a href="{{ route('products.show', $product->slug) }}" class="text-decoration-none text-dark">{{ $product->name }}</a>
-          </h6>
-          <p class="text-muted small mb-2">
-            @if($product->defaultVariant && $product->defaultVariant->attributeValues->count() > 0)
-              @foreach($product->defaultVariant->attributeValues->take(3) as $attrValue)
-                {{ $attrValue->value }}@if(!$loop->last), @endif
-              @endforeach
-            @else
-              {{ $product->description ? Str::limit($product->description, 50) : 'Xem chi tiết' }}
-            @endif
-          </p>
-
-          <!-- Price -->
-          <div class="price-container mb-3">
-            @if($product->minPrice && $product->maxPrice && $product->minPrice != $product->maxPrice)
-              <span class="price-new">{{ number_format($product->minPrice) }}₫ - {{ number_format($product->maxPrice) }}₫</span>
-            @elseif($product->defaultVariant)
-              <span class="price-new">{{ number_format($product->defaultVariant->price) }}₫</span>
+            <img src="{{ $product->defaultVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop' }}" 
+                 class="card-img-top w-100 h-100" alt="{{ $product->name }}" 
+                 style="object-fit: cover; transition: transform 0.3s;">
+            @if($product->defaultVariant->hasDiscount())
+              <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                -{{ $product->defaultVariant->getDiscountPercent() }}%
+              </span>
             @endif
           </div>
+          <div class="card-body d-flex flex-column">
+            <!-- Tên sản phẩm -->
+            <h6 class="card-title fw-bold mb-2">{{ $product->name }}</h6>
+            
+            <!-- Mô tả -->
+            <p class="text-muted small mb-2" style="min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              {{ Str::limit($product->description ?? 'Sản phẩm chất lượng cao', 80) }}
+            </p>
 
-          <!-- Specs -->
-          @if($product->defaultVariant && $product->defaultVariant->attributeValues->count() > 0)
-          <div class="product-specs mb-3">
-            @foreach($product->defaultVariant->attributeValues->take(3) as $attrValue)
-            <div class="spec-item">
-              <i class="bi bi-{{ $attrValue->attribute->slug === 'cpu' ? 'cpu' : ($attrValue->attribute->slug === 'ram' ? 'memory' : 'hdd') }}"></i>
-              <span>{{ $attrValue->value }}</span>
+            <!-- Rating -->
+            <div class="product-rating mb-2">
+              @php
+                $avgRating = $product->average_rating ?? 0;
+                $totalReviews = $product->total_reviews ?? 0;
+              @endphp
+              <div class="stars">
+                @for($star = 1; $star <= 5; $star++)
+                  <i class="bi bi-star{{ $star <= round($avgRating) ? '-fill' : '' }}" style="color: {{ $star <= round($avgRating) ? '#ffc107' : '#ddd' }};"></i>
+                @endfor
+              </div>
+              <span class="rating-text">({{ $totalReviews }})</span>
             </div>
-            @endforeach
-          </div>
-          @endif
 
-          <!-- Warranty -->
-          <div class="mb-3">
-            <span class="warranty-badge">
-              <i class="bi bi-shield-check"></i> Bảo hành 12 tháng
-            </span>
-          </div>
+            <!-- Price Section -->
+            <div class="price-container mb-3">
+              @php
+                $oldPrice = $product->defaultVariant->old_price ?? 0;
+                $hasDiscount = $product->defaultVariant->hasDiscount();
+              @endphp
+              @if($hasDiscount || $oldPrice > 0)
+                <!-- Giá cũ (gạch ngang) -->
+                <div class="mb-1">
+                  <span class="text-muted" style="text-decoration: line-through; font-size: 0.9rem;">
+                    {{ number_format($oldPrice > 0 ? $oldPrice : 0) }}₫
+                  </span>
+                </div>
+              @endif
+              <!-- Giá mới (đỏ) -->
+              <div class="mb-1">
+                <span class="text-danger fw-bold" style="font-size: 1.2rem;">
+                  {{ number_format($product->defaultVariant->price) }}₫
+                </span>
+              </div>
+              @if($hasDiscount)
+                <!-- Phần trăm giảm -->
+                <div class="mb-2">
+                  <span class="badge bg-danger">
+                    Giảm {{ $product->defaultVariant->getDiscountPercent() }}%
+                  </span>
+                </div>
+              @endif
+            </div>
 
-          <!-- Actions -->
-          <div class="product-actions">
-            @if($product->defaultVariant && $product->defaultVariant->stock > 0)
-            <button class="btn btn-primary btn-sm flex-grow-1 add-to-cart-btn" data-variant-id="{{ $product->defaultVariant->id }}">
-              <i class="bi bi-cart-plus"></i> Thêm vào giỏ
-            </button>
-            @else
-            <button class="btn btn-secondary btn-sm flex-grow-1" disabled>
-              <i class="bi bi-x-circle"></i> Hết hàng
-            </button>
+            <!-- Specs -->
+            @if($product->defaultVariant->attributeValues->count() > 0)
+            <div class="product-specs mb-3">
+              @foreach($product->defaultVariant->attributeValues->take(3) as $attrValue)
+              <div class="spec-item">
+                <i class="bi bi-check-circle"></i>
+                <span>{{ $attrValue->attribute->name ?? '' }}: {{ $attrValue->value }}</span>
+              </div>
+              @endforeach
+            </div>
             @endif
-            <a href="{{ route('products.show', $product->slug) }}" class="btn btn-outline-danger btn-sm">
-              <i class="bi bi-eye"></i>
-            </a>
           </div>
         </div>
-      </div>
+      </a>
+      @endif
     </div>
     @empty
     <div class="col-12">
@@ -403,59 +430,98 @@
     <a href="{{ route('products.index') }}" class="btn btn-outline-primary">{{ config('constants.buttons.view_all') }} <i class="bi bi-arrow-right"></i></a>
   </div>
   <div class="row g-4">
-    @for($i = 1; $i <= 4; $i++)
+    @forelse($gamingProducts ?? [] as $product)
     <div class="col-lg-3 col-md-4 col-sm-6">
-      <div class="card product-card h-100">
-        <div class="position-relative overflow-hidden" style="height: 240px;">
-          <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=300&fit=crop" class="card-img-top w-100 h-100" alt="Product" style="object-fit: cover;">
-          <div class="position-absolute top-0 start-0 m-3">
-            <span class="badge bg-danger">Gaming</span>
+      @if($product->defaultVariant)
+      <a href="{{ route('products.show', $product->slug) }}" class="text-decoration-none">
+        <div class="card product-card h-100" style="transition: all 0.3s; cursor: pointer;">
+          <div class="position-relative overflow-hidden" style="height: 240px;">
+            <img src="{{ $product->defaultVariant->image ?? 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=300&fit=crop' }}" 
+                 class="card-img-top w-100 h-100" alt="{{ $product->name }}" 
+                 style="object-fit: cover; transition: transform 0.3s;">
+            @if($product->defaultVariant->hasDiscount())
+              <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                -{{ $product->defaultVariant->getDiscountPercent() }}%
+              </span>
+            @endif
+            <div class="position-absolute top-0 start-0 m-3">
+              <span class="badge bg-danger">Gaming</span>
+            </div>
+          </div>
+          <div class="card-body d-flex flex-column">
+            <!-- Tên sản phẩm -->
+            <h6 class="card-title fw-bold mb-2">{{ $product->name }}</h6>
+            
+            <!-- Mô tả -->
+            <p class="text-muted small mb-2" style="min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              {{ Str::limit($product->description ?? 'Sản phẩm chất lượng cao', 80) }}
+            </p>
+
+            <!-- Rating -->
+            <div class="product-rating mb-2">
+              @php
+                $avgRating = $product->average_rating ?? 0;
+                $totalReviews = $product->total_reviews ?? 0;
+              @endphp
+              <div class="stars">
+                @for($star = 1; $star <= 5; $star++)
+                  <i class="bi bi-star{{ $star <= round($avgRating) ? '-fill' : '' }}" style="color: {{ $star <= round($avgRating) ? '#ffc107' : '#ddd' }};"></i>
+                @endfor
+              </div>
+              <span class="rating-text">({{ $totalReviews }})</span>
+            </div>
+
+            <!-- Price Section -->
+            <div class="price-container mb-3">
+              @php
+                $oldPrice = $product->defaultVariant->old_price ?? 0;
+                $hasDiscount = $product->defaultVariant->hasDiscount();
+              @endphp
+              @if($hasDiscount || $oldPrice > 0)
+                <!-- Giá cũ (gạch ngang) -->
+                <div class="mb-1">
+                  <span class="text-muted" style="text-decoration: line-through; font-size: 0.9rem;">
+                    {{ number_format($oldPrice > 0 ? $oldPrice : 0) }}₫
+                  </span>
+                </div>
+              @endif
+              <!-- Giá mới (đỏ) -->
+              <div class="mb-1">
+                <span class="text-danger fw-bold" style="font-size: 1.2rem;">
+                  {{ number_format($product->defaultVariant->price) }}₫
+                </span>
+              </div>
+              @if($hasDiscount)
+                <!-- Phần trăm giảm -->
+                <div class="mb-2">
+                  <span class="badge bg-danger">
+                    Giảm {{ $product->defaultVariant->getDiscountPercent() }}%
+                  </span>
+                </div>
+              @endif
+            </div>
+
+            <!-- Specs -->
+            @if($product->defaultVariant->attributeValues->count() > 0)
+            <div class="product-specs mb-3">
+              @foreach($product->defaultVariant->attributeValues->take(3) as $attrValue)
+              <div class="spec-item">
+                <i class="bi bi-check-circle"></i>
+                <span>{{ $attrValue->attribute->name ?? '' }}: {{ $attrValue->value }}</span>
+              </div>
+              @endforeach
+            </div>
+            @endif
           </div>
         </div>
-        <div class="card-body d-flex flex-column">
-          <h6 class="card-title fw-bold">ASUS ROG Zephyrus G14 RTX {{ 4060 + $i * 10 }}</h6>
-          <p class="text-muted small mb-2">AMD Ryzen 9, 32GB RAM, 1TB SSD, 14" QHD 165Hz</p>
-
-          <div class="product-rating mb-2">
-            <div class="stars">
-              @for($star = 1; $star <= 5; $star++)
-                <i class="bi bi-star{{ $star <= 4 ? '-fill' : '' }}"></i>
-              @endfor
-            </div>
-            <span class="rating-text">({{ 89 + $i * 8 }})</span>
-          </div>
-
-          <div class="price-container mb-3">
-            <span class="price-new">{{ number_format(45990000 - $i * 2000000) }}₫</span>
-          </div>
-
-          <div class="product-specs mb-3">
-            <div class="spec-item">
-              <i class="bi bi-gpu-card"></i>
-              <span>RTX {{ 4060 + $i * 10 }}</span>
-            </div>
-            <div class="spec-item">
-              <i class="bi bi-cpu"></i>
-              <span>Ryzen 9</span>
-            </div>
-            <div class="spec-item">
-              <i class="bi bi-display"></i>
-              <span>165Hz</span>
-            </div>
-          </div>
-
-          <div class="product-actions">
-            <button class="btn btn-primary btn-sm flex-grow-1">
-              <i class="bi bi-cart-plus"></i> {{ config('constants.buttons.add_to_cart') }}
-            </button>
-            <button class="btn btn-outline-danger btn-sm">
-              <i class="bi bi-heart"></i>
-            </button>
-          </div>
-        </div>
-      </div>
+      </a>
+      @endif
     </div>
-    @endfor
+    @empty
+    <div class="col-12">
+      <p class="text-center text-muted">Chưa có sản phẩm laptop gaming</p>
+    </div>
+    @endforelse
   </div>
 </div>
 <!--end::Laptop Gaming-->
@@ -469,59 +535,98 @@
     <a href="{{ route('products.index') }}" class="btn btn-outline-primary">{{ config('constants.buttons.view_all') }} <i class="bi bi-arrow-right"></i></a>
   </div>
   <div class="row g-4">
-    @for($i = 1; $i <= 4; $i++)
+    @forelse($officeProducts ?? [] as $product)
     <div class="col-lg-3 col-md-4 col-sm-6">
-      <div class="card product-card h-100">
-        <div class="position-relative overflow-hidden" style="height: 240px;">
-          <img src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=300&fit=crop" class="card-img-top w-100 h-100" alt="Product" style="object-fit: cover;">
-          <div class="position-absolute top-0 start-0 m-3">
-            <span class="badge bg-info">Văn phòng</span>
+      @if($product->defaultVariant)
+      <a href="{{ route('products.show', $product->slug) }}" class="text-decoration-none">
+        <div class="card product-card h-100" style="transition: all 0.3s; cursor: pointer;">
+          <div class="position-relative overflow-hidden" style="height: 240px;">
+            <img src="{{ $product->defaultVariant->image ?? 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=300&fit=crop' }}" 
+                 class="card-img-top w-100 h-100" alt="{{ $product->name }}" 
+                 style="object-fit: cover; transition: transform 0.3s;">
+            @if($product->defaultVariant->hasDiscount())
+              <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                -{{ $product->defaultVariant->getDiscountPercent() }}%
+              </span>
+            @endif
+            <div class="position-absolute top-0 start-0 m-3">
+              <span class="badge bg-info">Văn phòng</span>
+            </div>
+          </div>
+          <div class="card-body d-flex flex-column">
+            <!-- Tên sản phẩm -->
+            <h6 class="card-title fw-bold mb-2">{{ $product->name }}</h6>
+            
+            <!-- Mô tả -->
+            <p class="text-muted small mb-2" style="min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              {{ Str::limit($product->description ?? 'Sản phẩm chất lượng cao', 80) }}
+            </p>
+
+            <!-- Rating -->
+            <div class="product-rating mb-2">
+              @php
+                $avgRating = $product->average_rating ?? 0;
+                $totalReviews = $product->total_reviews ?? 0;
+              @endphp
+              <div class="stars">
+                @for($star = 1; $star <= 5; $star++)
+                  <i class="bi bi-star{{ $star <= round($avgRating) ? '-fill' : '' }}" style="color: {{ $star <= round($avgRating) ? '#ffc107' : '#ddd' }};"></i>
+                @endfor
+              </div>
+              <span class="rating-text">({{ $totalReviews }})</span>
+            </div>
+
+            <!-- Price Section -->
+            <div class="price-container mb-3">
+              @php
+                $oldPrice = $product->defaultVariant->old_price ?? 0;
+                $hasDiscount = $product->defaultVariant->hasDiscount();
+              @endphp
+              @if($hasDiscount || $oldPrice > 0)
+                <!-- Giá cũ (gạch ngang) -->
+                <div class="mb-1">
+                  <span class="text-muted" style="text-decoration: line-through; font-size: 0.9rem;">
+                    {{ number_format($oldPrice > 0 ? $oldPrice : 0) }}₫
+                  </span>
+                </div>
+              @endif
+              <!-- Giá mới (đỏ) -->
+              <div class="mb-1">
+                <span class="text-danger fw-bold" style="font-size: 1.2rem;">
+                  {{ number_format($product->defaultVariant->price) }}₫
+                </span>
+              </div>
+              @if($hasDiscount)
+                <!-- Phần trăm giảm -->
+                <div class="mb-2">
+                  <span class="badge bg-danger">
+                    Giảm {{ $product->defaultVariant->getDiscountPercent() }}%
+                  </span>
+                </div>
+              @endif
+            </div>
+
+            <!-- Specs -->
+            @if($product->defaultVariant->attributeValues->count() > 0)
+            <div class="product-specs mb-3">
+              @foreach($product->defaultVariant->attributeValues->take(3) as $attrValue)
+              <div class="spec-item">
+                <i class="bi bi-check-circle"></i>
+                <span>{{ $attrValue->attribute->name ?? '' }}: {{ $attrValue->value }}</span>
+              </div>
+              @endforeach
+            </div>
+            @endif
           </div>
         </div>
-        <div class="card-body d-flex flex-column">
-          <h6 class="card-title fw-bold">Dell Latitude 5540</h6>
-          <p class="text-muted small mb-2">Intel Core i7, 16GB RAM, 512GB SSD, 15.6" FHD</p>
-
-          <div class="product-rating mb-2">
-            <div class="stars">
-              @for($star = 1; $star <= 5; $star++)
-                <i class="bi bi-star{{ $star <= (4 + ($i % 2)) ? '-fill' : '' }}"></i>
-              @endfor
-            </div>
-            <span class="rating-text">({{ 156 + $i * 10 }})</span>
-          </div>
-
-          <div class="price-container mb-3">
-            <span class="price-new">{{ number_format(18990000 - $i * 1000000) }}₫</span>
-          </div>
-
-          <div class="product-specs mb-3">
-            <div class="spec-item">
-              <i class="bi bi-cpu"></i>
-              <span>Intel i7</span>
-            </div>
-            <div class="spec-item">
-              <i class="bi bi-battery-full"></i>
-              <span>Pin 8h</span>
-            </div>
-            <div class="spec-item">
-              <i class="bi bi-lightning"></i>
-              <span>Nhẹ 1.6kg</span>
-            </div>
-          </div>
-
-          <div class="product-actions">
-            <button class="btn btn-primary btn-sm flex-grow-1">
-              <i class="bi bi-cart-plus"></i> {{ config('constants.buttons.add_to_cart') }}
-            </button>
-            <button class="btn btn-outline-danger btn-sm">
-              <i class="bi bi-heart"></i>
-            </button>
-          </div>
-        </div>
-      </div>
+      </a>
+      @endif
     </div>
-    @endfor
+    @empty
+    <div class="col-12">
+      <p class="text-center text-muted">Chưa có sản phẩm laptop văn phòng</p>
+    </div>
+    @endforelse
   </div>
 </div>
 <!--end::Laptop Văn Phòng-->

@@ -16,6 +16,13 @@ use App\Http\Controllers\WishlistController;
 // Trang chủ
 Route::get('/', [UserController::class, 'home'])->name('home');
 
+// Trang giới thiệu
+Route::get('/about', [UserController::class, 'about'])->name('about');
+
+// Tin tức
+Route::get('/news', [UserController::class, 'news'])->name('news.index');
+Route::get('/news/{slug}', [UserController::class, 'newsDetail'])->name('news.show');
+
 // Sản phẩm
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
@@ -36,9 +43,13 @@ Route::put('/api/cart/{id}', [CartController::class, 'update'])->name('api.cart.
 Route::delete('/api/cart/{id}', [CartController::class, 'remove'])->name('api.cart.remove');
 
 // Voucher routes
+Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
 Route::post('/api/voucher/validate', [VoucherController::class, 'validate'])->name('api.voucher.validate');
 Route::post('/voucher/apply', [VoucherController::class, 'apply'])->name('voucher.apply');
 Route::post('/voucher/remove', [VoucherController::class, 'remove'])->name('voucher.remove');
+
+// Buy Now route
+Route::get('/buy-now', [PaymentController::class, 'buyNow'])->name('buy.now');
 
 // API routes cho Wishlist
 Route::middleware('auth')->group(function () {
@@ -47,6 +58,8 @@ Route::middleware('auth')->group(function () {
 
 // Payment routes
 Route::middleware('auth')->group(function () {
+    Route::get('/checkout', [PaymentController::class, 'checkoutForm'])->name('checkout');
+    Route::get('/buy-now', [PaymentController::class, 'buyNow'])->name('buy.now'); // Mua ngay từ trang sản phẩm
     Route::post('/payment/checkout', [PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::get('/payment/success/{order}', [PaymentController::class, 'success'])->name('payment.success');
     Route::get('/payment/fail', [PaymentController::class, 'fail'])->name('payment.fail');
@@ -86,4 +99,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/orders/{id}/cancel', [UserController::class, 'cancelOrder'])->name('orders.cancel');
     Route::post('/orders/{id}/confirm-received', [UserController::class, 'confirmReceived'])->name('orders.confirmReceived');
     Route::post('/orders/{id}/return', [UserController::class, 'returnOrder'])->name('orders.return');
+
+    // Review routes - đánh giá từ đơn hàng
+    Route::get('/orders/{orderId}/reviews/create', [ReviewController::class, 'create'])->name('reviews.create');
+    Route::get('/orders/{orderId}/reviews/{productId}/create', [ReviewController::class, 'createSingle'])->name('reviews.create-single');
+    Route::post('/orders/{orderId}/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+    Route::get('/reviews/{id}/edit', [ReviewController::class, 'edit'])->name('reviews.edit');
+    Route::put('/reviews/{id}', [ReviewController::class, 'update'])->name('reviews.update');
+    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
 });

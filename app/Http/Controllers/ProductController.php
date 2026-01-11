@@ -15,7 +15,7 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::with(['category', 'variants.attributeValues.attribute'])
+        $query = Product::with(['category', 'variants.attributeValues.attribute', 'approvedReviews'])
             ->where('status', true);
 
         // Lọc theo category
@@ -84,7 +84,7 @@ class ProductController extends Controller
      */
     public function show($slug)
     {
-        $product = Product::with(['category', 'variants.attributeValues.attribute'])
+        $product = Product::with(['category', 'variants.attributeValues.attribute', 'approvedReviews.user'])
             ->where('slug', $slug)
             ->where('status', true)
             ->firstOrFail();
@@ -114,6 +114,11 @@ class ProductController extends Controller
             ->limit(4)
             ->get();
 
-        return view('user.products.show', compact('product', 'defaultVariant', 'attributes', 'relatedProducts'));
+        // Lấy đánh giá (tất cả, không giới hạn)
+        $reviews = $product->approvedReviews()->with('user')->orderBy('created_at', 'desc')->get();
+        $averageRating = $product->average_rating;
+        $totalReviews = $product->total_reviews;
+
+        return view('user.products.show', compact('product', 'defaultVariant', 'attributes', 'relatedProducts', 'reviews', 'averageRating', 'totalReviews'));
     }
 }

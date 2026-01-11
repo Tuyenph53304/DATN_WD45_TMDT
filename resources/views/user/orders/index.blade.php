@@ -90,9 +90,11 @@
             @endforeach
 
             <!-- Pagination -->
+            @if($orders instanceof \Illuminate\Pagination\LengthAwarePaginator && $orders->hasPages())
             <div class="mt-4">
               {{ $orders->links() }}
             </div>
+            @endif
           @else
             <div class="text-center py-5">
               <i class="bi bi-receipt text-muted" style="font-size: 4rem;"></i>
