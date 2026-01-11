@@ -534,6 +534,12 @@
             <span>Quản lý Voucher</span>
           </a>
         </li>
+        <li class="nav-item">
+          <a href="{{ route('admin.contacts.index') }}" class="nav-link {{ request()->routeIs('admin.contacts*') ? 'active' : '' }}">
+            <i class="bi bi-envelope-fill me-2"></i>
+            <span>Quản lý Liên hệ</span>
+          </a>
+        </li>
       </ul>
     </nav>
   </aside>
