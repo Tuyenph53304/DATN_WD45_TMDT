@@ -9,6 +9,7 @@ use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ChatbotController;
 
 // ============================================
 // USER ROUTES (FRONTEND)
@@ -31,8 +32,10 @@ Route::get('/products/{slug}', [ProductController::class, 'show'])->name('produc
  //contact
     Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
     Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
-
-
+// Chatbot
+Route::get('/chatbot', [ChatbotController::class, 'index'])->name('chatbot.index');
+Route::post('/chatbot/send', [ChatbotController::class, 'sendMessage'])->name('chatbot.send');
+Route::post('/clear', [ChatbotController::class, 'clearHistory'])->name('chatbot.clear');
 // Giỏ hàng
 Route::middleware('auth')->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
