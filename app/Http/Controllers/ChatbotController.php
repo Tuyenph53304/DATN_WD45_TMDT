@@ -88,11 +88,47 @@ class ChatbotController extends Controller
         elseif (str_contains($message, 'tạm biệt') || str_contains($message, 'bye') || str_contains($message, 'goodbye')) {
             return "👋 <strong>Tạm biệt bạn!</strong> Hẹn gặp lại. Đừng ngần ngại quay lại nếu cần hỗ trợ nhé!";
         }
+           elseif ($message === 'sản phẩm' || $message === 'san pham' || $message === 'products') {
+        return $this->showAllProducts();
+    }
         else {
             // Tìm kiếm sản phẩm
             return $this->searchProduct($message);
         }
     }
+
+    private function showAllProducts()
+{
+    $products = Product::limit(5)->get();
+
+    if ($products->count() > 0) {
+        $response = "📦 <strong>Tất cả sản phẩm hiện có:</strong>\n\n";
+
+        foreach ($products as $product) {
+            $variants = ProductVariant::where('product_id', $product->id)->get();
+            $minPrice = $variants->min('price');
+            $maxPrice = $variants->max('price');
+
+            $priceRange = $minPrice == $maxPrice
+                ? number_format($minPrice, 0, ',', '.') . ' VND'
+                : number_format($minPrice, 0, ',', '.') . ' - ' . number_format($maxPrice, 0, ',', '.') . ' VND';
+
+            $category = Category::find($product->category_id);
+            $categoryName = $category ? $category->name : 'Chưa phân loại';
+
+            $productUrl = route('products.show', $product->slug);
+
+            $response .= "• <strong>{$product->name}</strong>\n";
+            $response .= "  📂 Danh mục: {$categoryName}\n";
+            $response .= "  💰 Giá: {$priceRange}\n";
+            $response .= "  🔗 <a href=\"{$productUrl}\" target=\"_blank\" style=\"color: #28a745; text-decoration: none;\">Xem chi tiết →</a>\n\n";
+        }
+
+        return $response;
+    }
+
+    return "Hiện chưa có sản phẩm nào trong cửa hàng.";
+}
 
     // Hiển thị trợ giúp
     private function showHelp()
@@ -251,6 +287,10 @@ class ChatbotController extends Controller
     // Tìm kiếm sản phẩm
     private function searchProduct($keyword)
     {
+         // Nếu từ khóa là "sản phẩm laptop" hoặc tương tự, hiển thị tất cả
+    if (in_array($keyword, ['sản phẩm', 'san pham', 'sản phẩm laptop', 'laptop', 'máy tính'])) {
+        return $this->showAllProducts();
+    }
         // Tìm theo tên sản phẩm
         $products = Product::where('name', 'like', "%{$keyword}%")
                           ->orWhere('description', 'like', "%{$keyword}%")
@@ -281,7 +321,7 @@ class ChatbotController extends Controller
                 $response .= "  🔗 <a href=\"{$productUrl}\" target=\"_blank\" style=\"color: #28a745; text-decoration: none;\">Xem ngay →</a>\n\n";
             }
 
-          
+
             return $response;
         }
 
