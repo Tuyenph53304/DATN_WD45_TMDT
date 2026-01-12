@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('excerpt')->nullable(); // Tóm tắt bài viết
             $table->foreignId('author_id')->nullable()->constrained('users')->nullOnDelete();
             $table->boolean('status')->default(true); // true = published, false = draft
+            $table->timestamp('published_at')->nullable(); // Ngày xuất bản
             $table->integer('views')->default(0); // Số lượt xem
             $table->timestamps();
         });

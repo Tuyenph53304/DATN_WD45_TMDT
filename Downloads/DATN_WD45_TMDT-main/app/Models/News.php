@@ -15,11 +15,13 @@ class News extends Model
         'excerpt',
         'author_id',
         'status',
+        'published_at',
         'views',
     ];
 
     protected $casts = [
         'status' => 'boolean',
+        'published_at' => 'datetime',
         'views' => 'integer',
     ];
 

@@ -62,13 +62,13 @@
                                 </td>
                                 <td>{{ Str::limit($item->excerpt ?? strip_tags($item->content), 100) }}</td>
                                 <td>
-                                    @if($item->is_published)
+                                    @if($item->status)
                                         <span class="badge badge-success">Đã xuất bản</span>
                                     @else
                                         <span class="badge badge-warning">Nháp</span>
                                     @endif
                                 </td>
-                                <td>{{ $item->published_at->format('d/m/Y H:i') }}</td>
+                                <td>{{ $item->published_at ? $item->published_at->format('d/m/Y H:i') : $item->created_at->format('d/m/Y H:i') }}</td>
                                 <td>
                                     <a href="{{ route('admin.news.show', $item) }}" class="btn btn-info btn-sm">
                                         <i class="fas fa-eye"></i> Xem
