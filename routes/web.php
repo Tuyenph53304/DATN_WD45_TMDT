@@ -8,7 +8,6 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WishlistController;
-use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ChatbotController;
 
 // ============================================
@@ -29,9 +28,7 @@ Route::get('/news/{slug}', [UserController::class, 'newsDetail'])->name('news.sh
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
 
- //contact
-    Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
-    Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+
 // Chatbot
 Route::get('/chatbot', [ChatbotController::class, 'index'])->name('chatbot.index');
 Route::post('/chatbot/send', [ChatbotController::class, 'sendMessage'])->name('chatbot.send');
