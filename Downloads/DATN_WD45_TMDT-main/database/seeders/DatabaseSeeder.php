@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             ShippingAddressSeeder::class, // ShippingAddressSeeder phải chạy sau UserSeeder
             VoucherSeeder::class,
             BannerSeeder::class,
+            NewsSeeder::class,
         ]);
     }
 }

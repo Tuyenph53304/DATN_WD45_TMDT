@@ -97,18 +97,4 @@ class AdminBannerController extends Controller
         return redirect()->route('admin.banners.index')
             ->with('success', 'Banner được xóa thành công!');
     }
-
-    /**
-     * Toggle banner active status via API.
-     */
-    public function toggleActive(Banner $banner)
-    {
-        $banner->update(['is_active' => !$banner->is_active]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Trạng thái banner được cập nhật!',
-            'is_active' => $banner->is_active,
-        ]);
-    }
 }

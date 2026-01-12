@@ -54,30 +54,39 @@
                         @forelse ($banners as $banner)
                             <tr>
                                 <td>{{ $banner->id }}</td>
-                                <td>{{ $banner->title }}</td>
                                 <td>
-                                    <a href="{{ $banner->image_url }}" target="_blank">
-                                        <img src="{{ $banner->image_url }}" alt="{{ $banner->title }}" height="40">
-                                    </a>
+                                    <strong>{{ Str::limit($banner->title, 50) }}</strong>
+                                    @if($banner->description)
+                                        <br><small class="text-muted">{{ Str::limit($banner->description, 100) }}</small>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($banner->image_url)
+                                        <img src="{{ $banner->image_url }}" alt="{{ $banner->title }}" style="max-width: 100px; max-height: 50px;">
+                                    @else
+                                        <span class="text-muted">Không có ảnh</span>
+                                    @endif
                                 </td>
                                 <td>{{ $banner->order }}</td>
                                 <td>
-                                    <button class="btn btn-sm toggle-active" data-id="{{ $banner->id }}" data-active="{{ $banner->is_active ? 1 : 0 }}">
-                                        @if ($banner->is_active)
-                                            <span class="badge badge-success">Kích hoạt</span>
-                                        @else
-                                            <span class="badge badge-danger">Vô hiệu</span>
-                                        @endif
-                                    </button>
+                                    @if($banner->is_active)
+                                        <span class="badge badge-success">Hoạt động</span>
+                                    @else
+                                        <span class="badge badge-warning">Tạm dừng</span>
+                                    @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('admin.banners.edit', $banner->id) }}" class="btn btn-sm btn-info">
+                                    <a href="{{ route('admin.banners.show', $banner) }}" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i> Xem
+                                    </a>
+                                    <a href="{{ route('admin.banners.edit', $banner) }}" class="btn btn-warning btn-sm">
                                         <i class="fas fa-edit"></i> Sửa
                                     </a>
-                                    <form method="POST" action="{{ route('admin.banners.destroy', $banner->id) }}" style="display:inline-block;">
-                                        @method('DELETE')
+                                    <form action="{{ route('admin.banners.destroy', $banner) }}" method="POST" class="d-inline"
+                                          onsubmit="return confirm('Bạn có chắc muốn xóa banner này?')">
                                         @csrf
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bạn chắc chắn muốn xóa?')">
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm">
                                             <i class="fas fa-trash"></i> Xóa
                                         </button>
                                     </form>
@@ -85,44 +94,19 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center">Không có dữ liệu</td>
+                                <td colspan="6" class="text-center">Chưa có banner nào.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
-                <div class="d-flex justify-content-center">
-                    {{ $banners->links('pagination::bootstrap-4') }}
-                </div>
+
+                @if($banners->hasPages())
+                    <div class="d-flex justify-content-center">
+                        {{ $banners->links() }}
+                    </div>
+                @endif
             </div>
         </div>
     </div>
 </div>
-
-@push('scripts')
-<script>
-    $(document).on('click', '.toggle-active', function() {
-        const button = $(this);
-        const bannerId = button.data('id');
-        const isActive = button.data('active');
-
-        $.ajax({
-            url: `/api/banners/${bannerId}/toggle-active`,
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                const newStatus = response.is_active ? 1 : 0;
-                button.data('active', newStatus);
-
-                if (response.is_active) {
-                    button.html('<span class="badge badge-success">Kích hoạt</span>');
-                } else {
-                    button.html('<span class="badge badge-danger">Vô hiệu</span>');
-                }
-            }
-        });
-    });
-</script>
-@endpush
 @endsection
