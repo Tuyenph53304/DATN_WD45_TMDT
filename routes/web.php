@@ -9,6 +9,7 @@ use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\ContactController;
 
 // ============================================
 // USER ROUTES (FRONTEND)
@@ -23,6 +24,10 @@ Route::get('/about', [UserController::class, 'about'])->name('about');
 // Tin tức
 Route::get('/news', [UserController::class, 'news'])->name('news.index');
 Route::get('/news/{slug}', [UserController::class, 'newsDetail'])->name('news.show');
+
+ //contact
+    Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
+    Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
 // Sản phẩm
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
