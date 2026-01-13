@@ -2029,292 +2029,81 @@ body:has(#supportModal[style*="display: flex"]) .chatbot-window.active {
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Chatbot popup loaded');
+document.addEventListener('DOMContentLoaded', function () {
 
-    // Các biến
-    const chatbotPopup = document.getElementById('chatbot-popup');
     const chatbotToggle = document.getElementById('chatbot-toggle');
     const chatbotWindow = document.getElementById('chatbot-window');
     const chatbotContainer = document.getElementById('chatbot-container');
     const chatbotForm = document.getElementById('chatbot-form');
     const chatbotMessage = document.getElementById('chatbot-message');
-    const chatbotSend = document.getElementById('chatbot-send');
     const chatbotMinimize = document.getElementById('chatbot-minimize');
     const chatbotClose = document.getElementById('chatbot-close');
     const chatbotUnread = document.getElementById('chatbot-unread');
     const supportModal = document.getElementById('supportModal');
 
     let isOpen = false;
-    let isMinimized = false;
     let unreadCount = 0;
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
 
-    // Khởi tạo
-    initChatbot();
+    const csrfToken =
+        document.querySelector('meta[name="csrf-token"]')?.content ||
+        '{{ csrf_token() }}';
 
-    function initChatbot() {
-        console.log('Initializing chatbot...');
+    /* ================== INIT ================== */
+    showWelcomeMessage();
 
-        // Hiển thị welcome message
-        showWelcomeMessage();
+    chatbotToggle.onclick = toggleChatbot;
+    chatbotForm.onsubmit = handleSubmit;
+    chatbotMinimize.onclick = minimizeChatbot;
+    chatbotClose.onclick = closeChatbot;
 
-        // Event listeners
-        chatbotToggle.addEventListener('click', toggleChatbot);
-        chatbotForm.addEventListener('submit', handleSubmit);
-        chatbotMinimize.addEventListener('click', minimizeChatbot);
-        chatbotClose.addEventListener('click', closeChatbot);
-
-        // Quick questions
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('quick-question')) {
-                const question = e.target.getAttribute('data-question');
-                console.log('Quick question:', question);
-                if (question) {
-                    chatbotMessage.value = question;
-                    chatbotForm.dispatchEvent(new Event('submit'));
-                }
-            }
-        });
-
-        // Enter để gửi
-        chatbotMessage.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                chatbotForm.dispatchEvent(new Event('submit'));
-            }
-        });
-
-        // Click ngoài để đóng (chỉ trên mobile)
-        if (window.innerWidth <= 768) {
-            document.addEventListener('click', function(e) {
-                if (isOpen && !chatbotPopup.contains(e.target) && e.target !== chatbotToggle) {
-                    closeChatbot();
-                }
-            });
+    chatbotMessage.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            chatbotForm.dispatchEvent(new Event('submit'));
         }
+    });
 
-        // Theo dõi khi support modal mở/đóng
-        if (supportModal) {
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'style') {
-                        const displayStyle = window.getComputedStyle(supportModal).display;
-                        if (displayStyle === 'flex') {
-                            // Nếu support modal mở, đóng chatbot
-                            if (isOpen) {
-                                closeChatbot();
-                            }
-                            // Ẩn chatbot button tạm thời
-                            chatbotToggle.style.opacity = '0.3';
-                            chatbotToggle.style.pointerEvents = 'none';
-                        } else {
-                            // Hiện lại chatbot button
-                            chatbotToggle.style.opacity = '1';
-                            chatbotToggle.style.pointerEvents = 'auto';
-                        }
-                    }
-                });
-            });
-
-            observer.observe(supportModal, { attributes: true });
+    document.addEventListener('click', e => {
+        if (e.target.classList.contains('quick-question')) {
+            chatbotMessage.value = e.target.dataset.question;
+            chatbotForm.dispatchEvent(new Event('submit'));
         }
-    }
+    });
 
-    // Toggle mở/đóng chatbot
+    /* ================== CHATBOT CORE ================== */
+
     function toggleChatbot() {
-        console.log('Toggle chatbot clicked');
-
-        // Kiểm tra nếu support modal đang mở
-        if (supportModal && window.getComputedStyle(supportModal).display === 'flex') {
-            console.log('Support modal is open, cannot open chatbot');
-            return;
-        }
-
-        if (!isOpen) {
-            openChatbot();
-        } else {
-            closeChatbot();
-        }
+        if (supportModal && getComputedStyle(supportModal).display === 'flex') return;
+        isOpen ? closeChatbot() : openChatbot();
     }
 
-    // Mở chatbot
     function openChatbot() {
         chatbotWindow.classList.add('active');
         isOpen = true;
         unreadCount = 0;
-        updateUnreadBadge();
-
-        // Focus vào input
-        setTimeout(() => {
-            chatbotMessage.focus();
-            scrollToBottom();
-        }, 100);
+        updateUnread();
+        setTimeout(() => chatbotMessage.focus(), 100);
     }
 
-    // Đóng chatbot
     function closeChatbot() {
         chatbotWindow.classList.remove('active');
         isOpen = false;
-        isMinimized = false;
-        chatbotWindow.classList.remove('minimized');
     }
 
-    // Thu nhỏ chatbot
     function minimizeChatbot() {
-        isMinimized = !isMinimized;
-        if (isMinimized) {
-            chatbotWindow.classList.add('minimized');
-        } else {
-            chatbotWindow.classList.remove('minimized');
-            chatbotMessage.focus();
-        }
+        chatbotWindow.classList.toggle('minimized');
     }
 
-    // Hiển thị welcome message
-    function showWelcomeMessage() {
-        const welcomeHtml = `
-            <div class="chatbot-welcome">
-                <div class="chatbot-welcome-icon">🤖</div>
-                <h6>Xin chào! Tôi là trợ lý ảo BeeFast</h6>
-                <p class="small mb-3">Tôi có thể giúp bạn tìm sản phẩm, kiểm tra giá và tư vấn cấu hình.</p>
-                <p class="small text-muted mb-2">Hãy thử hỏi:</p>
-                <div class="d-flex flex-wrap justify-content-center gap-2">
-                    <button class="btn btn-sm btn-outline-success quick-question" data-question="Sản phẩm laptop">💻 Sản phẩm</button>
-                    <button class="btn btn-sm btn-outline-success quick-question" data-question="Giá BeeFast Pro X1">💰 Giá cả</button>
-                    <button class="btn btn-sm btn-outline-success quick-question" data-question="Danh mục">📁 Danh mục</button>
-                    <button class="btn btn-sm btn-outline-success quick-question" data-question="Xin chào">👋 Chào bot</button>
-                </div>
-            </div>
-        `;
-        chatbotContainer.innerHTML = welcomeHtml;
-    }
-
-    // Thêm tin nhắn vào chat
-    function addMessage(text, type) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `chat-message ${type}`;
-
-        const bubbleDiv = document.createElement('div');
-        bubbleDiv.className = 'message-bubble';
-
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
-        contentDiv.innerHTML = text.replace(/\n/g, '<br>');
-
-        const timeDiv = document.createElement('div');
-        timeDiv.className = 'message-time';
-        timeDiv.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
-        bubbleDiv.appendChild(contentDiv);
-        bubbleDiv.appendChild(timeDiv);
-        messageDiv.appendChild(bubbleDiv);
-        chatbotContainer.appendChild(messageDiv);
-
-        scrollToBottom();
-
-        // Tăng unread count nếu chat đang đóng
-        if (!isOpen && type === 'bot') {
-            unreadCount++;
-            updateUnreadBadge();
-        }
-    }
-
-    // Hiển thị loading
-    function showLoading() {
-        const loadingDiv = document.createElement('div');
-        loadingDiv.className = 'chat-message bot';
-        loadingDiv.id = 'chatbot-loading';
-
-        const bubbleDiv = document.createElement('div');
-        bubbleDiv.className = 'message-bubble';
-
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'chat-loading';
-        contentDiv.innerHTML = `
-            <div class="spinner-small"></div>
-            <span>Đang xử lý...</span>
-        `;
-
-        bubbleDiv.appendChild(contentDiv);
-        loadingDiv.appendChild(bubbleDiv);
-        chatbotContainer.appendChild(loadingDiv);
-
-        scrollToBottom();
-    }
-
-    // Xóa loading
-    function removeLoading() {
-        const loading = document.getElementById('chatbot-loading');
-        if (loading) {
-            loading.remove();
-        }
-    }
-
-    // Scroll xuống cuối
-    function scrollToBottom() {
-        chatbotContainer.scrollTop = chatbotContainer.scrollHeight;
-    }
-
-    // Update unread badge
-    function updateUnreadBadge() {
-        if (unreadCount > 0) {
-            chatbotUnread.textContent = unreadCount > 9 ? '9+' : unreadCount;
-            chatbotUnread.style.display = 'flex';
-            chatbotToggle.style.animation = 'pulse 1s infinite';
-        } else {
-            chatbotUnread.style.display = 'none';
-            chatbotToggle.style.animation = 'none';
-        }
-    }
-
-    // Hàm xử lý click link trong chat
-function handleLinkClick(e) {
-    e.preventDefault();
-    const link = e.target;
-
-    // Chỉ xử lý nếu là link trong chatbot
-    if (link.tagName === 'A' && link.href) {
-        const url = link.href;
-
-        // Kiểm tra nếu là internal link
-        if (url.includes(window.location.origin)) {
-            // Mở trong tab mới
-            window.open(url, '_blank');
-        } else {
-            // External link, mở trong tab mới
-            window.open(url, '_blank', 'noopener,noreferrer');
-        }
-    }
-}
-
-// Thêm event listener cho link clicks trong chatbot container
-document.addEventListener('click', function(e) {
-    // Kiểm tra nếu click trong chatbot container
-    if (chatbotContainer.contains(e.target)) {
-        handleLinkClick(e);
-    }
-});
-
-    // Xử lý gửi tin nhắn
     function handleSubmit(e) {
         e.preventDefault();
 
         const message = chatbotMessage.value.trim();
         if (!message) return;
 
-        console.log('Sending message:', message);
-
-        // Thêm tin nhắn người dùng
         addMessage(message, 'user');
-
-        // Xóa input
         chatbotMessage.value = '';
-
-        // Hiển thị loading
         showLoading();
 
-        // Gửi đến server
         fetch("{{ route('chatbot.send') }}", {
             method: 'POST',
             headers: {
@@ -2322,60 +2111,78 @@ document.addEventListener('click', function(e) {
                 'X-CSRF-TOKEN': csrfToken,
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ message: message })
+            body: JSON.stringify({ message })
         })
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
-            console.log('Server response:', data);
             removeLoading();
 
-            if (data.success) {
+            // ✅ CLEAR CHAT
+            if (data.clear === true) {
+                chatbotContainer.innerHTML = '';
+                showWelcomeMessage();
                 addMessage(data.message, 'bot');
-            } else {
-                addMessage('❌ Đã xảy ra lỗi. Vui lòng thử lại sau!', 'bot');
+                return;
             }
+
+            addMessage(data.message || '❌ Lỗi phản hồi', 'bot');
         })
-        .catch(error => {
-            console.error('Error sending message:', error);
+        .catch(() => {
             removeLoading();
-            addMessage('❌ Lỗi kết nối! Vui lòng thử lại sau.', 'bot');
+            addMessage('❌ Lỗi kết nối server', 'bot');
         });
     }
-// Hàm xử lý click link trong chat
-function handleLinkClick(e) {
-    e.preventDefault();
-    const link = e.target;
 
-    // Chỉ xử lý nếu là link trong chatbot
-    if (link.tagName === 'A' && link.href) {
-        const url = link.href;
+    /* ================== UI ================== */
 
-        // Kiểm tra nếu là internal link
-        if (url.includes(window.location.origin)) {
-            // Mở trong tab mới
-            window.open(url, '_blank');
-        } else {
-            // External link, mở trong tab mới
-            window.open(url, '_blank', 'noopener,noreferrer');
+    function addMessage(text, type) {
+        const div = document.createElement('div');
+        div.className = `chat-message ${type}`;
+        div.innerHTML = `
+            <div class="message-bubble">
+                <div class="message-content">${text}</div>
+                <div class="message-time">${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
+            </div>
+        `;
+        chatbotContainer.appendChild(div);
+        chatbotContainer.scrollTop = chatbotContainer.scrollHeight;
+
+        if (!isOpen && type === 'bot') {
+            unreadCount++;
+            updateUnread();
         }
     }
-}
 
-// Thêm event listener cho link clicks trong chatbot container
-document.addEventListener('click', function(e) {
-    // Kiểm tra nếu click trong chatbot container
-    if (chatbotContainer.contains(e.target)) {
-        handleLinkClick(e);
+    function showLoading() {
+        const div = document.createElement('div');
+        div.id = 'chatbot-loading';
+        div.className = 'chat-message bot';
+        div.innerHTML = `<div class="message-bubble">⏳ Đang xử lý...</div>`;
+        chatbotContainer.appendChild(div);
+        chatbotContainer.scrollTop = chatbotContainer.scrollHeight;
     }
-});
-    // Thêm function để kiểm tra xem có thể mở chatbot không
-    window.canOpenChatbot = function() {
-        if (supportModal && window.getComputedStyle(supportModal).display === 'flex') {
-            return false;
-        }
-        return true;
-    };
+
+    function removeLoading() {
+        document.getElementById('chatbot-loading')?.remove();
+    }
+
+    function updateUnread() {
+        chatbotUnread.style.display = unreadCount ? 'flex' : 'none';
+        chatbotUnread.textContent = unreadCount > 9 ? '9+' : unreadCount;
+    }
+
+    function showWelcomeMessage() {
+        chatbotContainer.innerHTML = `
+            <div class="chatbot-welcome text-center">
+                <div class="fs-2">🤖</div>
+                <h6>Xin chào! Tôi là BeeFast AI</h6>
+                <p class="small">Tôi có thể tư vấn sản phẩm ,giá laptop và cấu hình</p>
+            </div>
+        `;
+    }
+
 });
 </script>
+
 <!--end::Chatbot Popup-->
 </html>

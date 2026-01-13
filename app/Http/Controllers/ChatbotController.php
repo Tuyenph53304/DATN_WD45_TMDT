@@ -11,42 +11,48 @@ use App\Models\AttributeValue;
 
 class ChatbotController extends Controller
 {
-    // Trang chat
-    public function index()
-    {
-        $messages = ChatMessage::orderBy('created_at', 'asc')->limit(50)->get();
-        return view('user.chatbot.index', compact('messages'));
-    }
-
     // Xử lý gửi tin nhắn
     public function sendMessage(Request $request)
-    {
-        $request->validate([
-            'message' => 'required|string|max:500'
-        ]);
+{
+    $request->validate([
+        'message' => 'required|string|max:500'
+    ]);
 
-        $userMessage = trim($request->message);
+    $userMessage = trim($request->message);
+    $lowerMessage = strtolower($userMessage);
 
-        // Lưu tin nhắn người dùng
-        ChatMessage::create([
-            'message' => $userMessage,
-            'type' => 'user',
-        ]);
 
-        // Lấy phản hồi từ bot
-        $botMessage = $this->getBotResponse($userMessage);
-
-        // Lưu tin nhắn bot
-        ChatMessage::create([
-            'message' => strip_tags($botMessage), // Lưu plain text
-            'type' => 'bot',
-        ]);
+    if (in_array($lowerMessage, ['clear', 'xóa', 'xoa'])) {
+        ChatMessage::truncate();
 
         return response()->json([
-            'message' => $botMessage, // Trả về HTML
-            'success' => true
+            'success' => true,
+            'clear' => true,
+            'message' => "🧹 <strong>Đã xóa toàn bộ lịch sử chat, hãy bắt đầu cuộc trò chuyện mới!</strong>"
         ]);
     }
+
+    // Lưu tin nhắn người dùng
+    ChatMessage::create([
+        'message' => $userMessage,
+        'type' => 'user',
+    ]);
+
+    // Lấy phản hồi bot
+    $botMessage = $this->getBotResponse($lowerMessage);
+
+    // Lưu tin nhắn bot
+    ChatMessage::create([
+        'message' => strip_tags($botMessage),
+        'type' => 'bot',
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => $botMessage
+    ]);
+}
+
 
     // Bot trả lời
     private function getBotResponse($message)
@@ -54,10 +60,16 @@ class ChatbotController extends Controller
         $message = strtolower(trim($message));
 
         // Xử lý các lệnh đặc biệt
-        if ($message === 'clear' || $message === 'xóa' || $message === 'xoa') {
-            ChatMessage::truncate();
-            return "Đã xóa toàn bộ lịch sử chat!";
-        }
+       if ($message === 'clear' || $message === 'xóa' || $message === 'xoa') {
+    ChatMessage::truncate();
+
+    return response()->json([
+        'message' => "🧹 <strong>Đã xóa toàn bộ lịch sử chat!</strong>",
+        'success' => true,
+        'clear' => true
+    ]);
+}
+
 
         if ($message === 'help' || $message === 'trợ giúp' || $message === 'tro giup') {
             return $this->showHelp();
@@ -287,8 +299,8 @@ class ChatbotController extends Controller
     // Tìm kiếm sản phẩm
     private function searchProduct($keyword)
     {
-         // Nếu từ khóa là "sản phẩm laptop" hoặc tương tự, hiển thị tất cả
-    if (in_array($keyword, ['sản phẩm', 'san pham', 'sản phẩm laptop', 'laptop', 'máy tính'])) {
+
+    if (in_array($keyword, ['sản phẩm', 'san pham', 'sản phẩm laptop', 'laptop', 'máy tính','tôi muốn tìm laptop'])) {
         return $this->showAllProducts();
     }
         // Tìm theo tên sản phẩm
