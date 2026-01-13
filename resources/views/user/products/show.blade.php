@@ -9,8 +9,53 @@
             <div class="col-lg-6 mb-4">
                 <div class="card border-0 shadow-sm">
                     <div class="card-body p-4">
-                        <img src="{{ $defaultVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=800&h=600&fit=crop' }}"
-                            class="img-fluid w-100" alt="{{ $product->name }}" style="max-height: 500px; object-fit: contain;">
+                        @php
+                            $sortedImages = $product->images->sortBy('sort_order');
+                            $primaryImage = $sortedImages->first();
+                            
+                            // Xác định ảnh chính để hiển thị
+                            if ($primaryImage) {
+                                $productImage = asset('storage/' . $primaryImage->image_path);
+                            } elseif ($defaultVariant && $defaultVariant->image) {
+                                $productImage = str_starts_with($defaultVariant->image, 'http') 
+                                    ? $defaultVariant->image 
+                                    : asset('storage/' . $defaultVariant->image);
+                            } else {
+                                $productImage = 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=800&h=600&fit=crop';
+                            }
+                        @endphp
+                        
+                        <!-- Main Product Image -->
+                        <div class="product-main-image mb-3" style="text-align: center; background: #f8f9fa; border-radius: 10px; padding: 20px;">
+                            <img id="main-product-image" src="{{ $productImage }}"
+                                class="img-fluid" alt="{{ $product->name }}" 
+                                style="max-height: 500px; max-width: 100%; object-fit: contain;"
+                                onerror="this.src='https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=800&h=600&fit=crop'">
+                        </div>
+                        
+                        <!-- Image Gallery Thumbnails -->
+                        @if($product->images->count() > 0)
+                        <div class="product-image-gallery mt-3">
+                            <h6 class="mb-2"><strong>Xem thêm ảnh:</strong></h6>
+                            <div class="d-flex gap-2 flex-wrap">
+                                @foreach($sortedImages as $image)
+                                <img src="{{ asset('storage/' . $image->image_path) }}" 
+                                     alt="{{ $product->name }} - Ảnh {{ $loop->index + 1 }}"
+                                     class="img-thumbnail product-thumbnail" 
+                                     style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; border: 2px solid #dee2e6; transition: all 0.3s ease;"
+                                     onclick="document.getElementById('main-product-image').src = this.src"
+                                     onmouseover="this.style.borderColor='#667eea'"
+                                     onmouseout="this.style.borderColor='#dee2e6'"
+                                     onerror="this.style.display='none'">
+                                @endforeach
+                            </div>
+                        </div>
+                        @elseif($defaultVariant && $defaultVariant->image)
+                        <!-- Fallback to variant image if no product images -->
+                        <div class="text-muted small mt-2">
+                            <i class="bi bi-info-circle"></i> Chỉ có ảnh biến thể
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -192,9 +237,20 @@
                             <div class="col-lg-3 col-md-4 col-sm-6">
                                 <div class="card product-card h-100">
                                     <div class="position-relative overflow-hidden" style="height: 200px;">
-                                        <img src="{{ $relatedVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop' }}"
+                                        @php
+                                          $relatedProductImage = $related->images->sortBy('sort_order')->first();
+                                          $relatedImageUrl = $relatedProductImage 
+                                            ? asset('storage/' . $relatedProductImage->image_path)
+                                            : ($relatedVariant && $relatedVariant->image
+                                                ? (str_starts_with($relatedVariant->image, 'http')
+                                                    ? $relatedVariant->image
+                                                    : asset('storage/' . $relatedVariant->image))
+                                                : 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop');
+                                        @endphp
+                                        <img src="{{ $relatedImageUrl }}"
                                             class="card-img-top w-100 h-100" alt="{{ $related->name }}"
-                                            style="object-fit: cover;">
+                                            style="object-fit: cover;"
+                                            onerror="this.src='https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop'">
                                     </div>
                                     <div class="card-body">
                                         <h6 class="card-title">

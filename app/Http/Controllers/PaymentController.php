@@ -82,20 +82,20 @@ class PaymentController extends Controller
             $tempCartItem->product_variant_id = $variant->id;
             $tempCartItem->quantity = $buyNowData['quantity'];
             $tempCartItem->setRelation('productVariant', $variant);
-            
+
             $cartItems = collect([$tempCartItem]);
             $subtotal = $variant->price * $buyNowData['quantity'];
         } else {
             // Lấy giỏ hàng - chỉ lấy các item đã chọn
             $selectedItems = $request->input('selected_items', '');
-            
+
             // Debug logging
             Log::info('CheckoutForm - selected_items from request', [
                 'selected_items' => $selectedItems,
                 'all_input' => $request->all(),
                 'query_params' => $request->query(),
             ]);
-            
+
             // Xử lý selected_items: loại bỏ khoảng trắng và giá trị rỗng
             $selectedItemIds = [];
             if (!empty($selectedItems)) {
@@ -107,13 +107,13 @@ class PaymentController extends Controller
                     }
                 }
             }
-            
+
             // Debug logging
             Log::info('CheckoutForm - processed selected_item_ids', [
                 'selected_item_ids' => $selectedItemIds,
                 'count' => count($selectedItemIds),
             ]);
-            
+
             // Nếu không có selected_items hợp lệ, redirect về giỏ hàng
             if (empty($selectedItemIds)) {
                 Log::warning('CheckoutForm - No selected items', [
@@ -126,10 +126,10 @@ class PaymentController extends Controller
             // Lưu selected_items vào session để giữ lại khi redirect
             session(['checkout_selected_items' => implode(',', $selectedItemIds)]);
 
-            $cartItems = CartItem::with(['productVariant.product', 'productVariant.attributeValues'])
-                ->where('user_id', $user->id)
-                ->whereIn('id', $selectedItemIds)
-                ->get();
+                $cartItems = CartItem::with(['productVariant.product', 'productVariant.attributeValues'])
+                    ->where('user_id', $user->id)
+                    ->whereIn('id', $selectedItemIds)
+                    ->get();
 
             if ($cartItems->isEmpty()) {
                 return redirect()->route('cart.index')->with('error', 'Không tìm thấy sản phẩm đã chọn. Vui lòng chọn lại.');
@@ -197,14 +197,14 @@ class PaymentController extends Controller
             $tempCartItem->product_variant_id = $variant->id;
             $tempCartItem->quantity = $buyNowData['quantity'];
             $tempCartItem->setRelation('productVariant', $variant);
-            
+
             $cartItems = collect([$tempCartItem]);
             $subtotal = $variant->price * $buyNowData['quantity'];
         } else {
             // Lấy giỏ hàng - chỉ lấy các item đã chọn
             // Ưu tiên lấy từ request, nếu không có thì lấy từ session
             $selectedItems = $request->input('selected_items', session('checkout_selected_items', ''));
-            
+
             // Xử lý selected_items: loại bỏ khoảng trắng và giá trị rỗng
             $selectedItemIds = [];
             if (!empty($selectedItems)) {
@@ -216,7 +216,7 @@ class PaymentController extends Controller
                     }
                 }
             }
-            
+
             if (empty($selectedItemIds)) {
                 return redirect()->route('cart.index')->with('error', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán');
             }
@@ -252,7 +252,7 @@ class PaymentController extends Controller
         // Xử lý địa chỉ giao hàng
         $shippingAddressId = $request->input('shipping_address_id');
         $addressOption = $request->input('address_option', 'default');
-        
+
         // Nếu chọn chỉnh sửa, tạo địa chỉ mới hoặc cập nhật
         if ($addressOption === 'custom') {
             $request->validate([
@@ -275,17 +275,17 @@ class PaymentController extends Controller
             $shippingAddressId = $customShippingAddress->id;
         } else {
             // Sử dụng địa chỉ mặc định
-            if (!$shippingAddressId) {
+        if (!$shippingAddressId) {
                 // selected_items đã được lưu trong session từ checkoutForm()
                 return redirect()->route('checkout')->with('error', 'Vui lòng chọn địa chỉ giao hàng');
-            }
+        }
 
-            // Kiểm tra địa chỉ thuộc về user
-            $shippingAddress = ShippingAddress::where('id', $shippingAddressId)
-                ->where('user_id', $user->id)
-                ->first();
+        // Kiểm tra địa chỉ thuộc về user
+        $shippingAddress = ShippingAddress::where('id', $shippingAddressId)
+            ->where('user_id', $user->id)
+            ->first();
 
-            if (!$shippingAddress) {
+        if (!$shippingAddress) {
                 // selected_items đã được lưu trong session từ checkoutForm()
                 return redirect()->route('checkout')->with('error', 'Địa chỉ giao hàng không hợp lệ');
             }
@@ -300,6 +300,20 @@ class PaymentController extends Controller
         $buyNowData = null;
         if ($isBuyNow) {
             $buyNowData = session('buy_now');
+        }
+
+        // Lưu danh sách cart item IDs để xóa sau (trước khi tạo order)
+        $cartItemIdsToDelete = [];
+        if (!$isBuyNow) {
+            foreach ($cartItems as $cartItem) {
+                if (isset($cartItem->id) && $cartItem->id) {
+                    $cartItemIdsToDelete[] = $cartItem->id;
+                }
+            }
+            // Lưu vào session để dùng trong callback nếu cần
+            if (!empty($cartItemIdsToDelete)) {
+                session(['order_cart_items_' . $user->id => $cartItemIdsToDelete]);
+            }
         }
 
         // Tạo đơn hàng
@@ -348,26 +362,11 @@ class PaymentController extends Controller
                 // Thanh toán COD - commit transaction và xóa giỏ hàng
                 DB::commit();
 
-                // Xóa giỏ hàng (chỉ các item đã chọn, nếu không phải buy_now)
-                if (!$isBuyNow) {
-                    // Lấy từ request hoặc session
-                    $selectedItems = $request->input('selected_items', session('checkout_selected_items', ''));
-                    if ($selectedItems) {
-                        // Xử lý selected_items: loại bỏ khoảng trắng và giá trị rỗng
-                        $selectedItemIds = [];
-                        $items = explode(',', $selectedItems);
-                        foreach ($items as $item) {
-                            $item = trim($item);
-                            if (!empty($item) && is_numeric($item)) {
-                                $selectedItemIds[] = (int)$item;
-                            }
-                        }
-                        if (!empty($selectedItemIds)) {
-                            CartItem::where('user_id', $user->id)
-                                ->whereIn('id', $selectedItemIds)
-                                ->delete();
-                        }
-                    }
+                // Xóa giỏ hàng (chỉ các item đã được chuyển thành order, nếu không phải buy_now)
+                if (!$isBuyNow && !empty($cartItemIdsToDelete)) {
+                    CartItem::where('user_id', $user->id)
+                        ->whereIn('id', $cartItemIdsToDelete)
+                        ->delete();
                 }
 
                 // Xóa session buy_now nếu có
@@ -381,8 +380,11 @@ class PaymentController extends Controller
                     $voucher->incrementUsage();
                 }
 
-                // Xóa session checkout_selected_items
+                // Xóa session checkout_selected_items và order_cart_items
                 session()->forget('checkout_selected_items');
+                if (!empty($cartItemIdsToDelete)) {
+                    session()->forget('order_cart_items_' . $user->id);
+                }
 
                 Log::info('COD Order Created', [
                     'order_id' => $order->id,
@@ -395,7 +397,7 @@ class PaymentController extends Controller
                 // Thanh toán MoMo - tạo payment URL trước khi commit
                 // Xác định loại thanh toán MoMo
                 $momoPaymentType = $request->input('momo_payment_type', 'wallet');
-                
+
                 $paymentData = $this->momoService->createPaymentUrl(
                     $order->id,
                     $finalAmount,
@@ -406,14 +408,14 @@ class PaymentController extends Controller
 
                 if (!$paymentData['success']) {
                     DB::rollBack();
-                    
+
                     // Thông báo lỗi chi tiết hơn
                     $errorMessage = $paymentData['message'] ?? 'Không thể tạo URL thanh toán';
                     $errorCode = $paymentData['error_code'] ?? null;
-                    
+
                     // Xử lý đặc biệt cho mã lỗi 1005 (Giao dịch hết hạn)
                     if ($errorCode == '1005' || strpos($errorMessage, 'hết hạn') !== false) {
-                        $errorMessage = 'Giao dịch MoMo đã hết hạn (Mã lỗi: 1005). ' . 
+                        $errorMessage = 'Giao dịch MoMo đã hết hạn (Mã lỗi: 1005). ' .
                                        'Nguyên nhân có thể do: ' .
                                        '1) Thông tin demo MoMo đã hết hạn, ' .
                                        '2) QR code đã hết thời gian hiệu lực. ' .
@@ -421,13 +423,13 @@ class PaymentController extends Controller
                                        'và cấu hình thông tin trong file .env, hoặc thử lại sau vài phút.';
                     }
                     // Kiểm tra các lỗi khác liên quan đến QR
-                    elseif (strpos($errorMessage, 'QR') !== false || 
+                    elseif (strpos($errorMessage, 'QR') !== false ||
                             strpos($errorMessage, 'không tồn tại') !== false) {
-                        $errorMessage = 'QR code không tồn tại hoặc đã hết hạn. ' . 
+                        $errorMessage = 'QR code không tồn tại hoặc đã hết hạn. ' .
                                        'Vui lòng đăng ký tài khoản MoMo Merchant tại https://developers.momo.vn/ ' .
                                        'hoặc chọn phương thức thanh toán khác.';
                     }
-                    
+
                     // Log chi tiết để debug
                     Log::warning('MoMo Payment Failed', [
                         'order_id' => $order->id,
@@ -435,7 +437,7 @@ class PaymentController extends Controller
                         'error_message' => $errorMessage,
                         'amount' => $finalAmount,
                     ]);
-                    
+
                     return redirect()->route('cart.index')->with('error', $errorMessage);
                 }
 
@@ -446,26 +448,11 @@ class PaymentController extends Controller
                 // Commit transaction
                 DB::commit();
 
-                // Xóa giỏ hàng (chỉ các item đã chọn, nếu không phải buy_now)
-                if (!$isBuyNow) {
-                    // Lấy từ request hoặc session
-                    $selectedItems = $request->input('selected_items', session('checkout_selected_items', ''));
-                    if ($selectedItems) {
-                        // Xử lý selected_items: loại bỏ khoảng trắng và giá trị rỗng
-                        $selectedItemIds = [];
-                        $items = explode(',', $selectedItems);
-                        foreach ($items as $item) {
-                            $item = trim($item);
-                            if (!empty($item) && is_numeric($item)) {
-                                $selectedItemIds[] = (int)$item;
-                            }
-                        }
-                        if (!empty($selectedItemIds)) {
-                            CartItem::where('user_id', $user->id)
-                                ->whereIn('id', $selectedItemIds)
-                                ->delete();
-                        }
-                    }
+                // Xóa giỏ hàng (chỉ các item đã được chuyển thành order, nếu không phải buy_now)
+                if (!$isBuyNow && !empty($cartItemIdsToDelete)) {
+                    CartItem::where('user_id', $user->id)
+                        ->whereIn('id', $cartItemIdsToDelete)
+                        ->delete();
                 }
 
                 // Xóa session buy_now nếu có
@@ -479,8 +466,11 @@ class PaymentController extends Controller
                     $voucher->incrementUsage();
                 }
 
-                // Xóa session checkout_selected_items
+                // Xóa session checkout_selected_items và order_cart_items
                 session()->forget('checkout_selected_items');
+                if (!empty($cartItemIdsToDelete)) {
+                    session()->forget('order_cart_items_' . $user->id);
+                }
 
                 // Log để debug
                 if (config('app.debug')) {
@@ -554,7 +544,7 @@ class PaymentController extends Controller
             $order->payment_status = 'paid';
             $order->status = 'pending_confirmation'; // Chuyển sang chờ xác nhận sau khi thanh toán thành công
             $order->transaction_id = $result['transaction_id'];
-            
+
             // Lưu thông tin thanh toán chi tiết
             $paymentInfo = [
                 'transaction_id' => $result['transaction_id'],
@@ -565,18 +555,27 @@ class PaymentController extends Controller
                 'response_time' => $inputData['responseTime'] ?? now()->toDateTimeString(),
                 'message' => $result['message'] ?? 'Thanh toán thành công',
             ];
-            
+
             // Lưu vào customer_note hoặc có thể tạo bảng payment_details riêng
             // Tạm thời lưu JSON vào một field hoặc log
             Log::info('MoMo Payment Success - Details', [
                 'order_id' => $order->id,
                 'payment_info' => $paymentInfo,
             ]);
-            
+
             $order->save();
 
-            // Xóa giỏ hàng
-            CartItem::where('user_id', $order->user_id)->delete();
+            // Xóa giỏ hàng - lấy từ session hoặc xóa tất cả nếu không có
+            $cartItemIds = session('order_cart_items_' . $order->user_id, []);
+            if (!empty($cartItemIds)) {
+                CartItem::where('user_id', $order->user_id)
+                    ->whereIn('id', $cartItemIds)
+                    ->delete();
+                session()->forget('order_cart_items_' . $order->user_id);
+            } else {
+                // Fallback: xóa tất cả nếu không có thông tin
+                CartItem::where('user_id', $order->user_id)->delete();
+            }
 
             // Xóa session checkout_selected_items
             session()->forget('checkout_selected_items');
@@ -675,7 +674,7 @@ class PaymentController extends Controller
             $order->payment_status = 'paid';
             $order->status = 'pending_confirmation'; // Chuyển sang chờ xác nhận sau khi thanh toán thành công
             $order->transaction_id = $result['transaction_id'];
-            
+
             // Lưu thông tin thanh toán chi tiết
             $paymentInfo = [
                 'transaction_id' => $result['transaction_id'],
@@ -686,16 +685,25 @@ class PaymentController extends Controller
                 'response_time' => $inputData['responseTime'] ?? now()->toDateTimeString(),
                 'message' => $result['message'] ?? 'Thanh toán thành công',
             ];
-            
+
             Log::info('MoMo IPN Payment Success - Details', [
                 'order_id' => $order->id,
                 'payment_info' => $paymentInfo,
             ]);
-            
+
             $order->save();
 
-            // Xóa giỏ hàng
-            CartItem::where('user_id', $order->user_id)->delete();
+            // Xóa giỏ hàng - lấy từ session hoặc xóa tất cả nếu không có
+            $cartItemIds = session('order_cart_items_' . $order->user_id, []);
+            if (!empty($cartItemIds)) {
+                CartItem::where('user_id', $order->user_id)
+                    ->whereIn('id', $cartItemIds)
+                    ->delete();
+                session()->forget('order_cart_items_' . $order->user_id);
+            } else {
+                // Fallback: xóa tất cả nếu không có thông tin
+                CartItem::where('user_id', $order->user_id)->delete();
+            }
 
             // Xóa session checkout_selected_items
             session()->forget('checkout_selected_items');

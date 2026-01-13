@@ -75,7 +75,7 @@
 
                     @if($isLocked)
                       <small class="text-danger fw-bold">
-                        <i class="bi bi-lock-fill me-1"></i> Không thể sửa
+                        <i class="bi bi-lock-fill me-1"></i>
                       </small>
                     @else
                       @if($order->status === 'pending_confirmation')
@@ -112,13 +112,6 @@
                       @endif
                     @endif
                   </div>
-
-                  @if($isLocked)
-                    <div class="alert alert-warning mt-2 mb-0 py-2 px-3">
-                      <i class="bi bi-exclamation-triangle me-2"></i>
-                      <strong>Luồng mua hàng đã kết thúc.</strong> Không thể cập nhật trạng thái đơn hàng đã {{ $statusLabel }}.
-                    </div>
-                  @endif
                 </td>
               </tr>
               <tr>

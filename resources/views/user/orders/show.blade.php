@@ -55,27 +55,27 @@
                   $statusColor = $statusConfig['color'] ?? '#6B7280';
                 @endphp
                 <span class="badge" style="background-color: {{ $statusColor }};">{{ $statusLabel }}</span>
-                
+
                 @if($order->cancelled_request)
                   <span class="badge bg-warning ms-2">
                     <i class="bi bi-hourglass-split me-1"></i> Đang chờ xác nhận hủy
                   </span>
                 @endif
-                
+
                 {{-- Hủy trực tiếp khi đơn hàng đang chờ xác nhận --}}
                 @if($order->canCancelByCustomer() && !$order->cancelled_request && $order->status === 'pending_confirmation')
                   <button type="button" class="btn btn-sm btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
                     <i class="bi bi-x-circle me-1"></i> Hủy đơn
                   </button>
                 @endif
-                
+
                 {{-- Yêu cầu hủy khi đơn hàng từ đã xác nhận trở đi --}}
                 @if($order->canRequestCancel() && !$order->cancelled_request)
                   <button type="button" class="btn btn-sm btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
                     <i class="bi bi-x-circle me-1"></i> Yêu cầu hủy đơn
                   </button>
                 @endif
-                
+
                 @if($order->canConfirmByCustomer())
                   <form action="{{ route('user.orders.confirmReceived', $order->id) }}" method="POST" class="d-inline ms-2">
                     @csrf
@@ -84,7 +84,7 @@
                     </button>
                   </form>
                 @endif
-                
+
                 @if($order->canReturnByCustomer())
                   <form action="{{ route('user.orders.return', $order->id) }}" method="POST" class="d-inline ms-2">
                     @csrf
@@ -149,9 +149,21 @@
                 <tr>
                   <td>
                     <div class="d-flex align-items-center">
-                      <img src="{{ $item->productVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=100&h=100&fit=crop' }}"
+                      @php
+                        $product = $item->productVariant->product;
+                        $primaryImage = $product->images->sortBy('sort_order')->first();
+                        $productImage = $primaryImage 
+                          ? asset('storage/' . $primaryImage->image_path)
+                          : ($item->productVariant->image 
+                              ? (str_starts_with($item->productVariant->image, 'http') 
+                                  ? $item->productVariant->image 
+                                  : asset('storage/' . $item->productVariant->image))
+                              : 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=100&h=100&fit=crop');
+                      @endphp
+                      <img src="{{ $productImage }}"
                            class="rounded me-3"
-                           style="width: 60px; height: 60px; object-fit: cover;">
+                           style="width: 60px; height: 60px; object-fit: cover;"
+                           onerror="this.src='https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=100&h=100&fit=crop'">
                       <div>
                         <div class="fw-semibold">{{ $item->productVariant->product->name }}</div>
                       </div>
@@ -190,9 +202,20 @@
               <div class="review-item border-bottom pb-4 mb-4">
                 <div class="row align-items-center mb-3">
                   <div class="col-md-2">
-                    <img src="{{ $item->productVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=200&h=200&fit=crop' }}"
+                    @php
+                      $primaryImage = $product->images->sortBy('sort_order')->first();
+                      $productImage = $primaryImage 
+                        ? asset('storage/' . $primaryImage->image_path)
+                        : ($item->productVariant->image 
+                            ? (str_starts_with($item->productVariant->image, 'http') 
+                                ? $item->productVariant->image 
+                                : asset('storage/' . $item->productVariant->image))
+                            : 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=200&h=200&fit=crop');
+                    @endphp
+                    <img src="{{ $productImage }}"
                          class="img-fluid rounded" alt="{{ $product->name }}"
-                         style="max-height: 80px; object-fit: cover;">
+                         style="max-height: 80px; object-fit: cover;"
+                         onerror="this.src='https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=200&h=200&fit=crop'">
                   </div>
                   <div class="col-md-10">
                     <h6 class="fw-bold mb-1">{{ $product->name }}</h6>
@@ -225,18 +248,6 @@
                         <div class="small text-muted">
                           <i class="bi bi-clock me-1"></i>{{ $review->created_at->format('d/m/Y H:i') }}
                         </div>
-                      </div>
-                      <div class="btn-group btn-group-sm">
-                        <a href="{{ route('user.reviews.edit', $review->id) }}" class="btn btn-outline-primary">
-                          <i class="bi bi-pencil"></i> Sửa
-                        </a>
-                        <form action="{{ route('user.reviews.destroy', $review->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa đánh giá này?')">
-                          @csrf
-                          @method('DELETE')
-                          <button type="submit" class="btn btn-outline-danger">
-                            <i class="bi bi-trash"></i> Xóa
-                          </button>
-                        </form>
                       </div>
                     </div>
                     @if($review->comment)
@@ -322,7 +333,7 @@
               @endif
             </div>
           </div>
-          
+
           @if($order->cancel_reason)
           <!-- Cancel Reason -->
           <div class="card border-0 shadow-sm mt-4">
@@ -390,7 +401,7 @@
         <div class="modal-body">
           <p class="mb-3">Bạn có chắc chắn muốn hủy đơn hàng #<strong>{{ $order->id }}</strong>?</p>
           <p class="text-muted small mb-4">Vui lòng chọn lý do hủy đơn hàng:</p>
-          
+
           <div class="mb-3">
             <div class="form-check mb-2">
               <input class="form-check-input" type="radio" name="cancel_reason_option" id="reason1" value="Thay đổi ý định mua hàng">
@@ -429,13 +440,13 @@
               </label>
             </div>
           </div>
-          
+
           <div class="mb-3" id="otherReasonGroup" style="display: none;">
             <label for="other_reason" class="form-label">Vui lòng nhập lý do khác:</label>
             <textarea class="form-control" id="other_reason" rows="3" placeholder="Nhập lý do hủy đơn hàng..." maxlength="1000"></textarea>
             <small class="text-muted">Tối đa 1000 ký tự</small>
           </div>
-          
+
           <input type="hidden" id="final_cancel_reason" name="cancel_reason" required>
         </div>
         <div class="modal-footer">
@@ -495,12 +506,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const ratingValueInput = form.querySelector(`#rating_value_${productId}`);
     const isPositiveRadio1 = form.querySelector(`#is_positive_${productId}`);
     const isPositiveRadio0 = form.querySelector(`#is_positive_off_${productId}`);
-    
+
     // Handle rating radio change
     ratingRadios.forEach(radio => {
       radio.addEventListener('change', function() {
         ratingValueInput.value = this.value;
-        
+
         // Auto set is_positive based on rating
         if (parseInt(this.value) >= 4) {
           isPositiveRadio1.checked = true;
@@ -511,7 +522,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
     });
-    
+
     // Handle form submission
     form.addEventListener('submit', function(e) {
       const selectedRating = form.querySelector(`input[name="rating_star_${productId}"]:checked`);
@@ -530,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const otherReasonGroup = document.getElementById('otherReasonGroup');
     const otherReasonTextarea = document.getElementById('other_reason');
     const finalCancelReason = document.getElementById('final_cancel_reason');
-    
+
     // Show/hide other reason textarea
     reasonRadios.forEach(radio => {
       radio.addEventListener('change', function() {
@@ -542,19 +553,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
     });
-    
+
     // Handle form submission
     cancelForm.addEventListener('submit', function(e) {
       e.preventDefault();
-      
+
       const selectedReason = document.querySelector('input[name="cancel_reason_option"]:checked');
       if (!selectedReason) {
         alert('Vui lòng chọn lý do hủy đơn hàng');
         return false;
       }
-      
+
       let finalReason = selectedReason.value;
-      
+
       // If "Lý do khác" is selected, use the textarea value
       if (selectedReason.id === 'reason6' && selectedReason.value === 'other') {
         const otherReason = otherReasonTextarea.value.trim();
@@ -570,14 +581,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         finalReason = otherReason;
       }
-      
+
       // Set final reason value
       finalCancelReason.value = finalReason;
-      
+
       // Submit form
       this.submit();
     });
-    
+
     // Reset form when modal is closed
     cancelModal.addEventListener('hidden.bs.modal', function() {
       cancelForm.reset();

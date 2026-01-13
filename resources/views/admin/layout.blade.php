@@ -493,7 +493,7 @@
     <div class="sidebar-header">
       <h4>
         <i class="bi bi-speedometer2"></i>
-        Admin Panel
+        BeeFast
       </h4>
     </div>
     <nav class="sidebar-nav">

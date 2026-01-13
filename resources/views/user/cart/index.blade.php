@@ -27,10 +27,22 @@
                   </div>
                   <!-- Product Image -->
                   <div class="col-md-2 mb-3 mb-md-0">
-                    <img src="{{ $item->productVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=200&h=200&fit=crop' }}"
+                    @php
+                      $product = $item->productVariant->product;
+                      $primaryImage = $product->images->sortBy('sort_order')->first();
+                      $productImage = $primaryImage
+                        ? asset('storage/' . $primaryImage->image_path)
+                        : ($item->productVariant->image
+                            ? (str_starts_with($item->productVariant->image, 'http')
+                                ? $item->productVariant->image
+                                : asset('storage/' . $item->productVariant->image))
+                            : 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=200&h=200&fit=crop');
+                    @endphp
+                    <img src="{{ $productImage }}"
                          class="img-fluid rounded"
                          alt="{{ $item->productVariant->product->name }}"
-                         style="max-height: 120px; object-fit: cover;">
+                         style="max-height: 120px; object-fit: cover;"
+                         onerror="this.src='https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=200&h=200&fit=crop'">
                   </div>
 
                   <!-- Product Info -->
@@ -249,7 +261,7 @@
       const quantity = parseInt(checkbox.getAttribute('data-quantity')) || 0;
 
       if (itemId && itemId.trim() !== '') {
-        selectedTotal += price * quantity;
+      selectedTotal += price * quantity;
         selectedItems.push(itemId.trim());
       }
     });
@@ -317,7 +329,7 @@
         if (!addressWarning) {
           // Only enable if no address warning (meaning addresses exist)
           checkoutBtn.disabled = false;
-        }
+    }
       }
     }
 
@@ -401,7 +413,7 @@
         const itemId = checkbox.getAttribute('data-item-id');
         const isChecked = checkbox.checked;
         console.log(`Checkbox ${index}: id="${itemId}", checked=${isChecked}, type=${checkbox.type}`);
-        
+
         if (itemId && itemId.trim() !== '' && isChecked) {
           selectedItems.push(itemId.trim());
         }

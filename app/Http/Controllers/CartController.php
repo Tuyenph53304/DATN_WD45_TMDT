@@ -20,7 +20,7 @@ class CartController extends Controller
             return redirect()->route('home')->with('error', 'Vui lòng đăng nhập để xem giỏ hàng');
         }
 
-        $cartItems = CartItem::with(['productVariant.product', 'productVariant.attributeValues.attribute'])
+        $cartItems = CartItem::with(['productVariant.product.images', 'productVariant.product', 'productVariant.attributeValues.attribute'])
             ->where('user_id', $user->id)
             ->get();
 
@@ -93,7 +93,7 @@ class CartController extends Controller
             }
             $cartItem->quantity = $newQuantity;
             $cartItem->save();
-            
+
             // Trừ stock
             $variant->stock -= $request->quantity;
             $variant->save();
@@ -104,7 +104,7 @@ class CartController extends Controller
                 'product_variant_id' => $request->product_variant_id,
                 'quantity' => $request->quantity,
             ]);
-            
+
             // Trừ stock
             $variant->stock -= $request->quantity;
             $variant->save();
@@ -156,7 +156,7 @@ class CartController extends Controller
         // Kiểm tra tồn kho (cần kiểm tra stock hiện tại + số lượng đã có trong giỏ)
         // Stock hiện tại = stock thực tế + số lượng đã có trong giỏ (vì đã bị trừ khi thêm vào giỏ)
         $availableStock = $variant->stock + $oldQuantity;
-        
+
         if ($availableStock < $newQuantity) {
             return response()->json([
                 'success' => false,
