@@ -118,27 +118,81 @@
                             <div class="mb-4">
                                 <h6 class="fw-bold mb-3">Chọn cấu hình:</h6>
                                 <div class="row g-2" id="variant-selection">
+                                    @php
+                                        // Mapping icon cho các attribute
+                                        $attributeIcons = [
+                                            'CPU' => 'bi-cpu',
+                                            'Processor' => 'bi-cpu',
+                                            'RAM' => 'bi-memory',
+                                            'Memory' => 'bi-memory',
+                                            'Storage' => 'bi-hdd',
+                                            'SSD' => 'bi-hdd',
+                                            'HDD' => 'bi-hdd',
+                                            'GPU' => 'bi-gpu-card',
+                                            'Graphics' => 'bi-gpu-card',
+                                            'VGA' => 'bi-gpu-card',
+                                            'Display' => 'bi-display',
+                                            'Screen' => 'bi-display',
+                                            'Màn hình' => 'bi-display',
+                                            'Battery' => 'bi-battery-full',
+                                            'Pin' => 'bi-battery-full',
+                                            'OS' => 'bi-windows',
+                                            'Operating System' => 'bi-windows',
+                                            'Hệ điều hành' => 'bi-windows',
+                                            'Color' => 'bi-palette',
+                                            'Màu sắc' => 'bi-palette',
+                                            'Weight' => 'bi-rulers',
+                                            'Trọng lượng' => 'bi-rulers',
+                                        ];
+                                        
+                                        function getAttributeIcon($attributeName, $attributeIcons) {
+                                            $name = strtolower($attributeName);
+                                            foreach ($attributeIcons as $key => $icon) {
+                                                if (str_contains(strtolower($key), $name) || str_contains($name, strtolower($key))) {
+                                                    return $icon;
+                                                }
+                                            }
+                                            return 'bi-gear'; // Icon mặc định
+                                        }
+                                    @endphp
                                     @foreach ($product->variants as $variant)
                                         <div class="col-12">
-                                            <div class="card variant-card {{ $variant->id == $defaultVariant->id ? 'border-primary' : '' }}"
+                                            <div class="card variant-card {{ $variant->id == $defaultVariant->id ? 'border-primary border-2' : 'border' }}"
                                                 data-variant-id="{{ $variant->id }}" data-price="{{ $variant->price }}"
-                                                data-stock="{{ $variant->stock }}" style="cursor: pointer;">
+                                                data-stock="{{ $variant->stock }}" 
+                                                style="cursor: pointer; transition: all 0.3s ease;"
+                                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)'"
+                                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
                                                 <div class="card-body p-3">
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <strong>{{ number_format($variant->price) }}₫</strong>
-                                                            <div class="small text-muted">
-                                                                @foreach ($variant->attributeValues as $attrValue)
-                                                                    {{ $attrValue->value }}@if (!$loop->last)
-                                                                        ,
-                                                                    @endif
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="flex-grow-1">
+                                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                                <strong class="text-danger fs-5">{{ number_format($variant->price) }}₫</strong>
+                                                            </div>
+                                                            <div class="variant-specs">
+                                                                @foreach ($variant->attributeValues->sortBy(function($item) {
+                                                                    $order = ['CPU', 'Processor', 'RAM', 'Memory', 'Storage', 'SSD', 'HDD', 'GPU', 'Graphics', 'VGA', 'Display', 'Screen', 'Battery', 'OS'];
+                                                                    $name = $item->attribute->name ?? '';
+                                                                    $index = array_search($name, $order);
+                                                                    return $index !== false ? $index : 999;
+                                                                }) as $attrValue)
+                                                                    @php
+                                                                        $attrName = $attrValue->attribute->name ?? '';
+                                                                        $icon = getAttributeIcon($attrName, $attributeIcons);
+                                                                    @endphp
+                                                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                                                        <i class="bi {{ $icon }} text-primary" style="font-size: 1rem; min-width: 20px;"></i>
+                                                                        <span class="small">
+                                                                            <strong>{{ $attrName }}:</strong> 
+                                                                            <span class="text-muted">{{ $attrValue->value }}</span>
+                                                                        </span>
+                                                                    </div>
                                                                 @endforeach
                                                             </div>
                                                         </div>
-                                                        <div>
+                                                        <div class="ms-3">
                                                             @if ($variant->stock > 0)
-                                                                <span class="badge bg-success">Còn {{ $variant->stock }}
-                                                                    sản phẩm</span>
+                                                                <span class="badge bg-success">Còn {{ $variant->stock }} sản phẩm</span>
                                                             @else
                                                                 <span class="badge bg-danger">Hết hàng</span>
                                                             @endif
@@ -155,12 +209,26 @@
                         <!-- Selected Variant Info -->
                         <div class="mb-4" id="selected-variant-info">
                             <div class="alert alert-info">
-                                <strong>Thông tin cấu hình:</strong>
-                                <div id="variant-details">
+                                <strong><i class="bi bi-info-circle me-2"></i>Thông tin cấu hình:</strong>
+                                <div id="variant-details" class="mt-2">
                                     @if ($defaultVariant)
-                                        @foreach ($defaultVariant->attributeValues as $attrValue)
-                                            <div><strong>{{ $attrValue->attribute->name }}:</strong>
-                                                {{ $attrValue->value }}</div>
+                                        @foreach ($defaultVariant->attributeValues->sortBy(function($item) {
+                                            $order = ['CPU', 'Processor', 'RAM', 'Memory', 'Storage', 'SSD', 'HDD', 'GPU', 'Graphics', 'VGA', 'Display', 'Screen', 'Battery', 'OS'];
+                                            $name = $item->attribute->name ?? '';
+                                            $index = array_search($name, $order);
+                                            return $index !== false ? $index : 999;
+                                        }) as $attrValue)
+                                            @php
+                                                $attrName = $attrValue->attribute->name ?? '';
+                                                $icon = getAttributeIcon($attrName, $attributeIcons);
+                                            @endphp
+                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                <i class="bi {{ $icon }} text-primary" style="font-size: 1.1rem; min-width: 24px;"></i>
+                                                <span>
+                                                    <strong>{{ $attrName }}:</strong> 
+                                                    <span class="text-muted">{{ $attrValue->value }}</span>
+                                                </span>
+                                            </div>
                                         @endforeach
                                     @endif
                                 </div>
@@ -375,8 +443,8 @@
                     attributes: [
                         @foreach($variant->attributeValues as $attrValue)
                         {
-                            name: "{{ $attrValue->attribute->name }}",
-                            value: "{{ $attrValue->value }}"
+                            name: "{{ addslashes($attrValue->attribute->name ?? '') }}",
+                            value: "{{ addslashes($attrValue->value) }}"
                         }@if(!$loop->last),@endif
                         @endforeach
                     ]
@@ -473,13 +541,70 @@
                 }
             }
 
+            // Icon mapping cho attributes
+            const attributeIcons = {
+                'CPU': 'bi-cpu',
+                'Processor': 'bi-cpu',
+                'RAM': 'bi-memory',
+                'Memory': 'bi-memory',
+                'Storage': 'bi-hdd',
+                'SSD': 'bi-hdd',
+                'HDD': 'bi-hdd',
+                'GPU': 'bi-gpu-card',
+                'Graphics': 'bi-gpu-card',
+                'VGA': 'bi-gpu-card',
+                'Display': 'bi-display',
+                'Screen': 'bi-display',
+                'Màn hình': 'bi-display',
+                'Battery': 'bi-battery-full',
+                'Pin': 'bi-battery-full',
+                'OS': 'bi-windows',
+                'Operating System': 'bi-windows',
+                'Hệ điều hành': 'bi-windows',
+                'Color': 'bi-palette',
+                'Màu sắc': 'bi-palette',
+                'Weight': 'bi-rulers',
+                'Trọng lượng': 'bi-rulers',
+            };
+
+            function getAttributeIcon(attributeName) {
+                const name = attributeName.toLowerCase();
+                for (const [key, icon] of Object.entries(attributeIcons)) {
+                    if (name.includes(key.toLowerCase()) || key.toLowerCase().includes(name)) {
+                        return icon;
+                    }
+                }
+                return 'bi-gear'; // Icon mặc định
+            }
+
+            // Sắp xếp attributes theo thứ tự ưu tiên
+            function sortAttributes(attributes) {
+                const order = ['CPU', 'Processor', 'RAM', 'Memory', 'Storage', 'SSD', 'HDD', 'GPU', 'Graphics', 'VGA', 'Display', 'Screen', 'Battery', 'OS'];
+                return attributes.sort((a, b) => {
+                    const indexA = order.findIndex(o => a.name.toLowerCase().includes(o.toLowerCase()));
+                    const indexB = order.findIndex(o => b.name.toLowerCase().includes(o.toLowerCase()));
+                    return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+                });
+            }
+
             // Function to update variant details
             function updateVariantDetails(variant) {
                 const variantDetails = document.querySelector('#variant-details');
                 if (variantDetails && variant.attributes) {
                     let html = '';
-                    variant.attributes.forEach(attr => {
-                        html += `<div><strong>${attr.name}:</strong> ${attr.value}</div>`;
+                    const sortedAttributes = sortAttributes([...variant.attributes]);
+                    
+                    sortedAttributes.forEach(attr => {
+                        const icon = getAttributeIcon(attr.name);
+                        html += `
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="bi ${icon} text-primary" style="font-size: 1.1rem; min-width: 24px;"></i>
+                                <span>
+                                    <strong>${attr.name}:</strong> 
+                                    <span class="text-muted">${attr.value}</span>
+                                </span>
+                            </div>
+                        `;
                     });
                     variantDetails.innerHTML = html;
                 }
