@@ -110,9 +110,20 @@
                                 <a href="{{ route('products.show', $product->slug) }}" class="text-decoration-none">
                                     <div class="card product-card h-100" style="transition: all 0.3s; cursor: pointer;">
                                     <div class="position-relative overflow-hidden" style="height: 240px;">
-                                        <img src="{{ $defaultVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop' }}"
+                                        @php
+                                          $primaryImage = $product->images->sortBy('sort_order')->first();
+                                          $productImage = $primaryImage 
+                                            ? asset('storage/' . $primaryImage->image_path)
+                                            : ($defaultVariant && $defaultVariant->image 
+                                                ? (str_starts_with($defaultVariant->image, 'http') 
+                                                    ? $defaultVariant->image 
+                                                    : asset('storage/' . $defaultVariant->image))
+                                                : 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop');
+                                        @endphp
+                                        <img src="{{ $productImage }}"
                                             class="card-img-top w-100 h-100" alt="{{ $product->name }}"
-                                                style="object-fit: cover; transition: transform 0.3s;">
+                                            style="object-fit: cover; transition: transform 0.3s;"
+                                            onerror="this.src='https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop'">
                                             @if($defaultVariant->hasDiscount())
                                                 <span class="badge bg-danger position-absolute top-0 end-0 m-2">
                                                     -{{ $defaultVariant->getDiscountPercent() }}%

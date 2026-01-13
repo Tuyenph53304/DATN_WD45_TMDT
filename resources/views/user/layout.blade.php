@@ -87,7 +87,7 @@
                                 <i class="bi bi-laptop" style="font-size: 2rem;"></i>
                             </div>
                             <div class="ms-3">
-                                <h4 class="mb-0 fw-bold text-primary">{{ config('constants.site.name') }}</h4>
+                                <h4 class="mb-0 fw-bold text-primary">Laptop BeeFast</h4>
                                 <small
                                     class="text-muted d-none d-md-block">{{ config('constants.site.slogan') }}</small>
                             </div>

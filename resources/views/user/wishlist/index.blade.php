@@ -24,7 +24,17 @@
                         <div class="list-group-item list-group-item-action wishlist-item-row p-3 mb-3 border rounded-3 shadow-sm">
                             <div class="row align-items-center">
                                 <div class="col-md-2 col-4">
-                                    <img src="{{ asset('storage/' . $defaultVariant->image) }}" class="img-fluid rounded" alt="{{ $product->name }}" style="max-height: 100px; object-fit: cover;">
+                                    @php
+                                      $primaryImage = $product->images->sortBy('sort_order')->first();
+                                      $productImage = $primaryImage 
+                                        ? asset('storage/' . $primaryImage->image_path)
+                                        : ($defaultVariant && $defaultVariant->image 
+                                            ? (str_starts_with($defaultVariant->image, 'http') 
+                                                ? $defaultVariant->image 
+                                                : asset('storage/' . $defaultVariant->image))
+                                            : 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop');
+                                    @endphp
+                                    <img src="{{ $productImage }}" class="img-fluid rounded" alt="{{ $product->name }}" style="max-height: 100px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop'">
                                 </div>
                                 <div class="col-md-6 col-8">
                                     <h5 class="mb-1 fw-bold">

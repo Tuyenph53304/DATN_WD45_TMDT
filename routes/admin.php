@@ -25,6 +25,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Quản lý Products
     Route::resource('products', AdminProductController::class);
+    Route::delete('/products/{product}/images/{image}', [AdminProductController::class, 'deleteImage'])->name('products.images.delete');
 
     // Quản lý Orders
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');

@@ -22,7 +22,7 @@ class UserController extends Controller
         // Lấy sản phẩm flash sale (có thể lấy sản phẩm có giá tốt nhất)
         $flashSaleProducts = Product::with(['variants' => function($query) {
                 $query->orderBy('price', 'asc');
-            }, 'variants.attributeValues.attribute', 'category', 'approvedReviews'])
+            }, 'variants.attributeValues.attribute', 'category', 'approvedReviews', 'images'])
             ->where('status', true)
             ->has('variants')
             ->limit(4)
@@ -37,7 +37,7 @@ class UserController extends Controller
         // Lấy sản phẩm nổi bật
         $featuredProducts = Product::with(['variants' => function($query) {
                 $query->orderBy('price', 'asc');
-            }, 'variants.attributeValues.attribute', 'category', 'approvedReviews'])
+            }, 'variants.attributeValues.attribute', 'category', 'approvedReviews', 'images'])
             ->where('status', true)
             ->has('variants')
             ->limit(4)
@@ -52,7 +52,7 @@ class UserController extends Controller
         // Lấy sản phẩm Laptop Gaming
         $gamingProducts = Product::with(['variants' => function($query) {
                 $query->orderBy('price', 'asc');
-            }, 'variants.attributeValues.attribute', 'category', 'approvedReviews'])
+            }, 'variants.attributeValues.attribute', 'category', 'approvedReviews', 'images'])
             ->where('status', true)
             ->whereHas('category', function($query) {
                 $query->where('slug', 'laptop-gaming');
@@ -70,7 +70,7 @@ class UserController extends Controller
         // Lấy sản phẩm Laptop Văn Phòng
         $officeProducts = Product::with(['variants' => function($query) {
                 $query->orderBy('price', 'asc');
-            }, 'variants.attributeValues.attribute', 'category', 'approvedReviews'])
+            }, 'variants.attributeValues.attribute', 'category', 'approvedReviews', 'images'])
             ->where('status', true)
             ->whereHas('category', function($query) {
                 $query->where('slug', 'laptop-van-phong');
@@ -190,6 +190,7 @@ class UserController extends Controller
     {
         $user = Auth::user();
         $order = Order::with([
+            'orderItems.productVariant.product.images', 
             'orderItems.productVariant.product', 
             'orderItems.productVariant.attributeValues', 
             'shippingAddress'

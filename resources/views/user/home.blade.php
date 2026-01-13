@@ -10,6 +10,48 @@
     background: linear-gradient(90deg, transparent, var(--border-color), transparent);
     margin: 4rem 0;
   }
+  .brands-section {
+  background: #fff;
+}
+
+.brand-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 20px;
+  align-items: center;
+}
+
+.brand-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.brand-item img {
+  max-height: 40px;
+  max-width: 100%;
+  filter: grayscale(100%);
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.brand-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  border-color: var(--bs-primary);
+}
+
+.brand-item:hover img {
+  filter: grayscale(0%);
+  opacity: 1;
+}
+
 </style>
 @endpush
 
@@ -200,9 +242,20 @@
         <a href="{{ route('products.show', $product->slug) }}" class="text-decoration-none">
           <div class="card product-card h-100 position-relative" style="transition: all 0.3s; cursor: pointer;">
           <div class="position-relative overflow-hidden" style="height: 240px;">
-              <img src="{{ $product->defaultVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop' }}" 
-                   class="card-img-top w-100 h-100" alt="{{ $product->name }}" 
-                   style="object-fit: cover; transition: transform 0.3s;">
+              @php
+                $primaryImage = $product->images->sortBy('sort_order')->first();
+                $productImage = $primaryImage 
+                  ? asset('storage/' . $primaryImage->image_path)
+                  : ($product->defaultVariant && $product->defaultVariant->image 
+                      ? (str_starts_with($product->defaultVariant->image, 'http') 
+                          ? $product->defaultVariant->image 
+                          : asset('storage/' . $product->defaultVariant->image))
+                      : 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop');
+              @endphp
+              <img src="{{ $productImage }}"
+                   class="card-img-top w-100 h-100" alt="{{ $product->name }}"
+                   style="object-fit: cover; transition: transform 0.3s;"
+                   onerror="this.src='https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop'">
               @if($product->defaultVariant->hasDiscount())
                 <span class="badge bg-danger position-absolute top-0 end-0 m-2">
                   -{{ $product->defaultVariant->getDiscountPercent() }}%
@@ -212,7 +265,7 @@
             <div class="card-body d-flex flex-column">
               <!-- Tên sản phẩm -->
               <h6 class="card-title fw-bold mb-2">{{ $product->name }}</h6>
-              
+
               <!-- Mô tả -->
               <p class="text-muted small mb-2" style="min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                 {{ Str::limit($product->description ?? 'Sản phẩm chất lượng cao', 80) }}
@@ -291,34 +344,43 @@
 
 <!--begin::Brands Section-->
 <div class="brands-section mb-5">
-  <h3 class="fw-bold mb-4 text-center"><i class="bi bi-award-fill" style="color: {{ config('constants.theme.primary') }};"></i> Thương hiệu nổi bật</h3>
+  <h3 class="fw-bold mb-4 text-center">
+    <i class="bi bi-award-fill" style="color: {{ config('constants.theme.primary') }};"></i>
+    Thương hiệu nổi bật
+  </h3>
+
   <div class="brand-grid">
-    <div class="brand-item">
-      <img src="https://logos-world.net/wp-content/uploads/2020/11/ASUS-Logo.png" alt="ASUS" style="max-height: 40px;">
-    </div>
-    <div class="brand-item">
-      <img src="https://logos-world.net/wp-content/uploads/2020/11/MSI-Logo.png" alt="MSI" style="max-height: 40px;">
-    </div>
-    <div class="brand-item">
-      <img src="https://logos-world.net/wp-content/uploads/2020/06/Dell-Logo.png" alt="Dell" style="max-height: 40px;">
-    </div>
-    <div class="brand-item">
-      <img src="https://logos-world.net/wp-content/uploads/2020/06/HP-Logo.png" alt="HP" style="max-height: 40px;">
-    </div>
-    <div class="brand-item">
-      <img src="https://logos-world.net/wp-content/uploads/2020/06/Lenovo-Logo.png" alt="Lenovo" style="max-height: 40px;">
-    </div>
-    <div class="brand-item">
-      <img src="https://logos-world.net/wp-content/uploads/2020/06/Apple-Logo.png" alt="Apple" style="max-height: 40px;">
-    </div>
-    <div class="brand-item">
-      <img src="https://logos-world.net/wp-content/uploads/2020/06/Acer-Logo.png" alt="Acer" style="max-height: 40px;">
-    </div>
-    <div class="brand-item">
-      <img src="https://logos-world.net/wp-content/uploads/2020/06/HP-Logo.png" alt="HP" style="max-height: 40px;">
-    </div>
+    <a href="/thuong-hieu/asus" class="brand-item">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/ASUS_Logo.svg" alt="ASUS">
+    </a>
+
+    <a href="/thuong-hieu/msi" class="brand-item">
+      <img src="https://logos-world.net/wp-content/uploads/2020/11/MSI-Logo.png" alt="MSI">
+    </a>
+
+    <a href="/thuong-hieu/dell" class="brand-item">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/4/48/Dell_Logo.svg" alt="Dell">
+    </a>
+
+    <a href="/thuong-hieu/hp" class="brand-item">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/a/ad/HP_logo_2012.svg" alt="HP">
+    </a>
+
+    <a href="/thuong-hieu/lenovo" class="brand-item">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/Lenovo_logo_2015.svg" alt="Lenovo">
+    </a>
+
+    <a href="/thuong-hieu/apple" class="brand-item">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple">
+    </a>
+
+    <a href="/thuong-hieu/acer" class="brand-item">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/0/00/Acer_2011.svg" alt="Acer">
+    </a>
   </div>
 </div>
+
+
 <!--end::Brands Section-->
 
 <!--begin::Featured Products-->
@@ -333,10 +395,21 @@
       @if($product->defaultVariant)
       <a href="{{ route('products.show', $product->slug) }}" class="text-decoration-none">
         <div class="card product-card h-100" style="transition: all 0.3s; cursor: pointer;">
-        <div class="position-relative overflow-hidden" style="height: 240px;">
-            <img src="{{ $product->defaultVariant->image ?? 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop' }}" 
-                 class="card-img-top w-100 h-100" alt="{{ $product->name }}" 
-                 style="object-fit: cover; transition: transform 0.3s;">
+          <div class="position-relative overflow-hidden" style="height: 240px;">
+            @php
+              $primaryImage = $product->images->sortBy('sort_order')->first();
+              $productImage = $primaryImage 
+                ? asset('storage/' . $primaryImage->image_path)
+                : ($product->defaultVariant && $product->defaultVariant->image 
+                    ? (str_starts_with($product->defaultVariant->image, 'http') 
+                        ? $product->defaultVariant->image 
+                        : asset('storage/' . $product->defaultVariant->image))
+                    : 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop');
+            @endphp
+            <img src="{{ $productImage }}"
+                 class="card-img-top w-100 h-100" alt="{{ $product->name }}"
+                 style="object-fit: cover; transition: transform 0.3s;"
+                 onerror="this.src='https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop'">
             @if($product->defaultVariant->hasDiscount())
               <span class="badge bg-danger position-absolute top-0 end-0 m-2">
                 -{{ $product->defaultVariant->getDiscountPercent() }}%
@@ -346,7 +419,7 @@
           <div class="card-body d-flex flex-column">
             <!-- Tên sản phẩm -->
             <h6 class="card-title fw-bold mb-2">{{ $product->name }}</h6>
-            
+
             <!-- Mô tả -->
             <p class="text-muted small mb-2" style="min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
               {{ Str::limit($product->description ?? 'Sản phẩm chất lượng cao', 80) }}
@@ -436,9 +509,20 @@
       <a href="{{ route('products.show', $product->slug) }}" class="text-decoration-none">
         <div class="card product-card h-100" style="transition: all 0.3s; cursor: pointer;">
           <div class="position-relative overflow-hidden" style="height: 240px;">
-            <img src="{{ $product->defaultVariant->image ?? 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=300&fit=crop' }}" 
-                 class="card-img-top w-100 h-100" alt="{{ $product->name }}" 
-                 style="object-fit: cover; transition: transform 0.3s;">
+            @php
+              $primaryImage = $product->images->sortBy('sort_order')->first();
+              $productImage = $primaryImage 
+                ? asset('storage/' . $primaryImage->image_path)
+                : ($product->defaultVariant && $product->defaultVariant->image 
+                    ? (str_starts_with($product->defaultVariant->image, 'http') 
+                        ? $product->defaultVariant->image 
+                        : asset('storage/' . $product->defaultVariant->image))
+                    : 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=300&fit=crop');
+            @endphp
+            <img src="{{ $productImage }}"
+                 class="card-img-top w-100 h-100" alt="{{ $product->name }}"
+                 style="object-fit: cover; transition: transform 0.3s;"
+                 onerror="this.src='https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=300&fit=crop'">
             @if($product->defaultVariant->hasDiscount())
               <span class="badge bg-danger position-absolute top-0 end-0 m-2">
                 -{{ $product->defaultVariant->getDiscountPercent() }}%
@@ -451,7 +535,7 @@
           <div class="card-body d-flex flex-column">
             <!-- Tên sản phẩm -->
             <h6 class="card-title fw-bold mb-2">{{ $product->name }}</h6>
-            
+
             <!-- Mô tả -->
             <p class="text-muted small mb-2" style="min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
               {{ Str::limit($product->description ?? 'Sản phẩm chất lượng cao', 80) }}
@@ -541,9 +625,20 @@
       <a href="{{ route('products.show', $product->slug) }}" class="text-decoration-none">
         <div class="card product-card h-100" style="transition: all 0.3s; cursor: pointer;">
           <div class="position-relative overflow-hidden" style="height: 240px;">
-            <img src="{{ $product->defaultVariant->image ?? 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=300&fit=crop' }}" 
-                 class="card-img-top w-100 h-100" alt="{{ $product->name }}" 
-                 style="object-fit: cover; transition: transform 0.3s;">
+            @php
+              $primaryImage = $product->images->sortBy('sort_order')->first();
+              $productImage = $primaryImage 
+                ? asset('storage/' . $primaryImage->image_path)
+                : ($product->defaultVariant && $product->defaultVariant->image 
+                    ? (str_starts_with($product->defaultVariant->image, 'http') 
+                        ? $product->defaultVariant->image 
+                        : asset('storage/' . $product->defaultVariant->image))
+                    : 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=300&fit=crop');
+            @endphp
+            <img src="{{ $productImage }}"
+                 class="card-img-top w-100 h-100" alt="{{ $product->name }}"
+                 style="object-fit: cover; transition: transform 0.3s;"
+                 onerror="this.src='https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=300&fit=crop'">
             @if($product->defaultVariant->hasDiscount())
               <span class="badge bg-danger position-absolute top-0 end-0 m-2">
                 -{{ $product->defaultVariant->getDiscountPercent() }}%
@@ -556,7 +651,7 @@
           <div class="card-body d-flex flex-column">
             <!-- Tên sản phẩm -->
             <h6 class="card-title fw-bold mb-2">{{ $product->name }}</h6>
-            
+
             <!-- Mô tả -->
             <p class="text-muted small mb-2" style="min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
               {{ Str::limit($product->description ?? 'Sản phẩm chất lượng cao', 80) }}

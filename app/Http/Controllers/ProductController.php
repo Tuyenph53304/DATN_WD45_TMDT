@@ -15,7 +15,7 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::with(['category', 'variants.attributeValues.attribute', 'approvedReviews'])
+        $query = Product::with(['category', 'variants.attributeValues.attribute', 'approvedReviews', 'images'])
             ->where('status', true);
 
         // Lọc theo category
@@ -84,7 +84,7 @@ class ProductController extends Controller
      */
     public function show($slug)
     {
-        $product = Product::with(['category', 'variants.attributeValues.attribute', 'approvedReviews.user'])
+        $product = Product::with(['category', 'variants.attributeValues.attribute', 'approvedReviews.user', 'images'])
             ->where('slug', $slug)
             ->where('status', true)
             ->firstOrFail();

@@ -33,6 +33,14 @@ class Product extends Model
     }
 
     /**
+     * Get the images for the product.
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('sort_order');
+    }
+
+    /**
      * Get the wishlist items for the product.
      */
     public function wishlistItems(): HasMany
