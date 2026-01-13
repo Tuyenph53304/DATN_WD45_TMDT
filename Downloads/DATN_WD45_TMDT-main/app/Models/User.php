@@ -1,0 +1,117 @@
+<?php
+
+namespace App\Models;
+
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\WishlistItem;
+class User extends Authenticatable
+{
+    /** @use HasFactory<\Database\Factories\UserFactory> */
+    use HasFactory, Notifiable;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'role',
+        'phone_number',
+        'address',
+        'google_id',
+        'activation_token',
+        'status',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+
+    /**
+     * Kiểm tra xem user có phải là admin không
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Kiểm tra xem user có phải là khách không
+     */
+    public function isGuest(): bool
+    {
+        return $this->role === 'khách';
+    }
+
+    /**
+     * Kiểm tra xem user có phải là người dùng không
+     */
+    public function isUser(): bool
+    {
+        return $this->role === 'user';
+    }
+
+    /**
+     * Get the cart items for the user.
+     */
+    public function cartItems(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CartItem::class);
+    }
+
+    /**
+     * Get the shipping addresses for the user.
+     */
+    public function shippingAddresses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ShippingAddress::class);
+    }
+
+    /**
+     * Get the orders for the user.
+     */
+    public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Get the wishlist items for the user.
+     */
+    public function wishlistItems(): HasMany
+    {
+        return $this->hasMany(WishlistItem::class);
+    }
+
+    // THÊM PHƯƠNG THỨC HỖ TRỢ ĐỂ KIỂM TRA SẢN PHẨM CÓ TRONG WISHLIST KHÔNG
+    public function hasInWishlist($productId)
+    {
+        return $this->wishlistItems()->where('product_id', $productId)->exists();
+    }
+}

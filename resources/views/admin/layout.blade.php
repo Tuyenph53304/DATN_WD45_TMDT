@@ -535,9 +535,9 @@
           </a>
         </li>
         <li class="nav-item">
-          <a href="{{ route('admin.reviews.index') }}" class="nav-link {{ request()->routeIs('admin.reviews*') ? 'active' : '' }}">
-            <i class="bi bi-star-fill"></i>
-            <span>Quản lý Đánh giá</span>
+          <a href="{{ route('admin.contacts.index') }}" class="nav-link {{ request()->routeIs('admin.contacts*') ? 'active' : '' }}">
+            <i class="bi bi-envelope-fill me-2"></i>
+            <span>Quản lý Liên hệ</span>
           </a>
         </li>
       </ul>
