@@ -5,7 +5,7 @@ return [
     // WEBSITE INFORMATION
     // ============================================
     'site' => [
-        'name' => 'LaptopStore',
+        'name' => 'BeeFast Laptop',
         'slogan' => 'Cửa hàng laptop uy tín',
         'description' => 'Chuyên cung cấp laptop chính hãng, giá tốt nhất thị trường',
         'logo' => '/assets/img/logo.png',
@@ -18,7 +18,7 @@ return [
     'contact' => [
         'hotline' => '1900 1234',
         'phone' => '0123456789',
-        'email' => 'support@laptopstore.vn',
+        'email' => 'support@beefast.vn',
         'address' => '123 Đường ABC, Quận XYZ, TP.HCM',
         'working_hours' => '8:00 - 22:00 (Tất cả các ngày)',
         'zalo' => 'https://zalo.me/0123456789',

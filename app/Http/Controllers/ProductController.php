@@ -15,68 +15,73 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::with(['category', 'variants.attributeValues.attribute', 'approvedReviews'])
-            ->where('status', true);
+        // Khởi tạo query và lọc các sản phẩm đang hoạt động
+        $query = Product::with(['category', 'approvedReviews'])
+        ->where('status', true);
 
-        // Lọc theo category
-        if ($request->has('category') && $request->category) {
-            $query->where('category_id', $request->category);
-        }
+    // Lọc theo danh mục (Nếu có category trên URL, nó sẽ áp dụng tại đây)
+    if ($request->filled('category')) {
+        $query->where('category_id', $request->category);
+    }
 
-        // Tìm kiếm theo tên & biến thể
-        if ($request->has('search') && $request->search) {
-            $searchTerm = '%' . $request->search . '%';
+    // Tìm kiếm theo tên hoặc mô tả
+    if ($request->filled('search')) {
+        $searchTerm = '%' . $request->search . '%';
+        $query->where(function ($q) use ($searchTerm) {
+            $q->where('name', 'like', $searchTerm)
+              ->orWhere('description', 'like', $searchTerm);
+        });
+    }
 
-            $query->where(function ($q) use ($searchTerm) {
-                // 1. Tìm kiếm theo tên sản phẩm (Sử dụng 'where' cho điều kiện đầu tiên)
-                $q->where('name', 'like', $searchTerm);
-                // 2. Tìm kiếm theo mô tả sản phẩm
-                $q->orWhereHas('variants.attributeValues', function ($qVariantAttr) use ($searchTerm) {
-                    $qVariantAttr->where('value', 'like', $searchTerm);
-                });
-            });
-        }
+    // Xử lý lọc biến thể (RAM, CPU,...)
+    // Loại bỏ các tham số không phải biến thể để xử lý mảng
+    $filterParams = $request->except(['category', 'search', 'page']);
 
-        $filterAttributes = $request->except(['category', 'search', 'page']);
-
-        if (!empty($filterAttributes)) {
-            // Lọc theo từng thuộc tính (Color, RAM, Storage, ...)
-            foreach ($filterAttributes as $attributeName => $values) {
+    if (!empty($filterParams)) {
+        // Tìm sản phẩm có BIẾN THỂ thỏa mãn ĐỒNG THỜI các tiêu chí
+        $query->whereHas('variants', function ($qVariant) use ($filterParams) {
+            foreach ($filterParams as $attrName => $values) {
                 if (is_array($values) && !empty($values)) {
-
-                    $attribute = Attribute::where('name', $attributeName)->first();
-
-                    if ($attribute) {
-                        // Áp dụng bộ lọc CONJUNCTIVE (AND) - sản phẩm phải thỏa mãn
-                        // tất cả các loại thuộc tính được chọn 
-                        $query->whereHas('variants', function ($qVariant) use ($attribute, $values) {
-                            $qVariant->whereHas('attributeValues', function ($qAttrValue) use ($attribute, $values) {
-                                $qAttrValue->where('attribute_id', $attribute->id)
-                                           ->whereIn('value', $values);
-                            });
-                        });
-                    }
+                    // Ép các điều kiện vào cùng 1 variant
+                    $qVariant->whereHas('attributeValues', function ($qAV) use ($attrName, $values) {
+                        $qAV->whereHas('attribute', function ($qA) use ($attrName) {
+                            $qA->where('name', $attrName);
+                        })->whereIn('value', $values);
+                    });
                 }
             }
+        });
+    }
+
+    // Load thêm dữ liệu biến thể để hiển thị ảnh/giá đúng cấu hình đã lọc
+    $query->with(['variants' => function ($q) use ($filterParams) {
+        if (!empty($filterParams)) {
+            foreach ($filterParams as $attrName => $values) {
+                $q->whereHas('attributeValues', function ($qAV) use ($attrName, $values) {
+                    $qAV->whereHas('attribute', function ($qA) use ($attrName) {
+                        $qA->where('name', $attrName);
+                    })->whereIn('value', $values);
+                });
+            }
         }
-        
-        // LẤY DỮ LIỆU CẦN THIẾT CHO FILTER PANEL
-        $availableFilters = DB::table('attribute_values')
-            ->select('attributes.name as attribute_name', 'attribute_values.value')
-            ->join('variant_attribute_values', 'attribute_values.id', '=', 'variant_attribute_values.attribute_value_id')
-            ->join('product_variants', 'variant_attribute_values.product_variant_id', '=', 'product_variants.id')
-            ->join('products', 'product_variants.product_id', '=', 'products.id')
-            ->join('attributes', 'attribute_values.attribute_id', '=', 'attributes.id')
-            ->where('products.status', true)
-            ->distinct()
-            ->orderBy('attribute_name')
-            ->get()
-            ->groupBy('attribute_name');
+    }, 'variants.attributeValues.attribute']);
 
-        $products = $query->paginate(12);
-        $categories = Category::where('status', true)->get();
+    // Dữ liệu cho Filter Panel (Giữ nguyên logic của bạn)
+    $availableFilters = DB::table('attribute_values')
+        ->join('attributes', 'attribute_values.attribute_id', '=', 'attributes.id')
+        ->join('variant_attribute_values', 'attribute_values.id', '=', 'variant_attribute_values.attribute_value_id')
+        ->join('product_variants', 'variant_attribute_values.product_variant_id', '=', 'product_variants.id')
+        ->join('products', 'product_variants.product_id', '=', 'products.id')
+        ->where('products.status', true)
+        ->select('attributes.name as attribute_name', 'attribute_values.value')
+        ->distinct()
+        ->get()
+        ->groupBy('attribute_name');
 
-        return view('user.products.index', compact('products', 'categories', 'availableFilters'));
+    $products = $query->paginate(12)->withQueryString();
+    $categories = Category::where('status', true)->get();
+
+    return view('user.products.index', compact('products', 'categories', 'availableFilters'));
     }
 
     /**
